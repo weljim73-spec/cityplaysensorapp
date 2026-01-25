@@ -1392,6 +1392,20 @@ with tab3:
 
         st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
 
+        # Time filter
+        agility_time_filter = st.radio(
+            "Time Period",
+            ["All Time", "Last 30 Days"],
+            horizontal=True,
+            key="agility_time_filter"
+        )
+
+        # Filter data based on selection
+        if agility_time_filter == "Last 30 Days" and 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            df = df[df['date'] >= cutoff_date]
+
         # Calculate agility statistics
         agility_metrics = [
             ('intense_turns', 'Intense Turns', '⚡ MOST IMPORTANT - Direction changes at 9+ mph'),
@@ -1424,6 +1438,20 @@ with tab4:
         df = st.session_state.df.copy()
 
         st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
+
+        # Time filter
+        ball_time_filter = st.radio(
+            "Time Period",
+            ["All Time", "Last 30 Days"],
+            horizontal=True,
+            key="ball_time_filter"
+        )
+
+        # Filter data based on selection
+        if ball_time_filter == "Last 30 Days" and 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            df = df[df['date'] >= cutoff_date]
 
         ball_metrics = [
             ('ball_touches', 'Total Ball Touches', '📊 Overall volume per session'),

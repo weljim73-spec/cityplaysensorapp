@@ -931,6 +931,21 @@ with tab3:
 
     st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
 
+    # Time filter
+    agility_time_filter = st.radio(
+        "Time Period",
+        ["All Time", "Last 30 Days"],
+        horizontal=True,
+        key="agility_time_filter"
+    )
+
+    # Filter data based on selection
+    df_agility = df.copy()
+    if agility_time_filter == "Last 30 Days" and 'date' in df_agility.columns:
+        df_agility['date'] = pd.to_datetime(df_agility['date'], errors='coerce')
+        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        df_agility = df_agility[df_agility['date'] >= cutoff_date]
+
     agility_metrics = [
         ('intense_turns', 'Intense Turns', '⚡ MOST IMPORTANT - Direction changes at 9+ mph'),
         ('avg_turn_exit', 'Turn Exit Speed (mph)', '🎯 Speed coming out of turns - Higher exit than entry = explosive power'),
@@ -943,8 +958,8 @@ with tab3:
     cols = st.columns(3)
     for idx, (col_name, label, description) in enumerate(agility_metrics):
         with cols[idx % 3]:
-            if col_name in df.columns:
-                values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+            if col_name in df_agility.columns:
+                values = pd.to_numeric(df_agility[col_name], errors='coerce').dropna()
                 if len(values) > 0:
                     avg_val = values.mean()
                     best_val = values.max()
@@ -958,6 +973,21 @@ with tab4:
 
     st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
 
+    # Time filter
+    ball_time_filter = st.radio(
+        "Time Period",
+        ["All Time", "Last 30 Days"],
+        horizontal=True,
+        key="ball_time_filter"
+    )
+
+    # Filter data based on selection
+    df_ball = df.copy()
+    if ball_time_filter == "Last 30 Days" and 'date' in df_ball.columns:
+        df_ball['date'] = pd.to_datetime(df_ball['date'], errors='coerce')
+        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        df_ball = df_ball[df_ball['date'] >= cutoff_date]
+
     ball_metrics = [
         ('ball_touches', 'Total Ball Touches', '📊 Overall volume per session'),
         ('left_touches', 'Left Foot Touches', '⬅️ Weak foot development'),
@@ -969,8 +999,8 @@ with tab4:
     cols = st.columns(3)
     for idx, (col_name, label, description) in enumerate(ball_metrics):
         with cols[idx % 3]:
-            if col_name in df.columns:
-                values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+            if col_name in df_ball.columns:
+                values = pd.to_numeric(df_ball[col_name], errors='coerce').dropna()
                 if len(values) > 0:
                     avg_val = values.mean()
                     best_val = values.max()
@@ -979,9 +1009,9 @@ with tab4:
                     st.caption(description)
 
     # L/R Ratio
-    if 'left_touches' in df.columns and 'right_touches' in df.columns:
-        left = pd.to_numeric(df['left_touches'], errors='coerce')
-        right = pd.to_numeric(df['right_touches'], errors='coerce')
+    if 'left_touches' in df_ball.columns and 'right_touches' in df_ball.columns:
+        left = pd.to_numeric(df_ball['left_touches'], errors='coerce')
+        right = pd.to_numeric(df_ball['right_touches'], errors='coerce')
         valid_mask = (left > 0) & (right > 0)
 
         if valid_mask.any():
