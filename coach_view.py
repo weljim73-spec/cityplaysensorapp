@@ -922,55 +922,72 @@ with tab1:
 
     with col1:
         if 'top_speed' in df.columns:
-            avg_speed = pd.to_numeric(df['top_speed'], errors='coerce').mean()
-            best_speed = pd.to_numeric(df['top_speed'], errors='coerce').max()
-            st.metric("Top Speed (mph)", f"{avg_speed:.1f}",
-                     delta=f"Best: {best_speed:.1f}", delta_color="normal")
-            st.caption("🚀 Maximum velocity")
+            values = pd.to_numeric(df['top_speed'], errors='coerce').dropna()
+            if len(values) > 0:
+                avg_speed = values.mean()
+                best_speed = values.max()
+                st.metric("Top Speed (mph) (avg)", f"{avg_speed:.1f}",
+                         delta=f"Best: {best_speed:.1f}", delta_color="normal")
+                st.caption("🚀 Maximum velocity")
 
     with col2:
         if 'intense_turns' in df.columns:
-            avg_turns = pd.to_numeric(df['intense_turns'], errors='coerce').mean()
-            best_turns = pd.to_numeric(df['intense_turns'], errors='coerce').max()
-            st.metric("Intense Turns", f"{avg_turns:.1f}",
-                     delta=f"Best: {best_turns:.1f}", delta_color="normal")
-            st.caption("🔄 High-speed direction changes")
+            values = pd.to_numeric(df['intense_turns'], errors='coerce').dropna()
+            if len(values) > 0:
+                avg_turns = values.mean()
+                best_turns = values.max()
+                st.metric("Intense Turns (avg)", f"{avg_turns:.1f}",
+                         delta=f"Best: {best_turns:.1f}", delta_color="normal")
+                st.caption("🔄 High-speed direction changes")
 
     with col3:
         if 'left_kicking_power_mph' in df.columns and 'right_kicking_power_mph' in df.columns:
-            left_power = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce')
-            right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce')
+            left_power = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce').dropna()
+            right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').dropna()
 
-            best_left = left_power.max()
-            best_right = right_power.max()
+            if len(left_power) > 0 or len(right_power) > 0:
+                best_left = left_power.max() if len(left_power) > 0 else 0
+                best_right = right_power.max() if len(right_power) > 0 else 0
 
-            if best_left >= best_right:
-                top_power = best_left
-                foot = "L"
-            else:
-                top_power = best_right
-                foot = "R"
+                if best_left >= best_right:
+                    top_power = best_left
+                    foot = "L"
+                else:
+                    top_power = best_right
+                    foot = "R"
 
-            st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
-                     delta=f"Best: {top_power:.1f}", delta_color="normal")
-            st.caption("⚽ Strongest kick recorded")
+                st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
+                         delta=f"Best: {top_power:.1f}", delta_color="normal")
+                st.caption("⚽ Strongest kick recorded")
 
     with col4:
         if 'left_touches' in df.columns and 'right_touches' in df.columns:
-            ball_df = df[(df['left_touches'] > 0) | (df['right_touches'] > 0)]
-            if len(ball_df) > 0:
-                left_total = pd.to_numeric(ball_df['left_touches'], errors='coerce').sum()
-                right_total = pd.to_numeric(ball_df['right_touches'], errors='coerce').sum()
-                total = left_total + right_total
-                if total > 0 and right_total > 0:
-                    lr_ratio = left_total / right_total
-                    st.metric("L/R Touch Ratio", f"{lr_ratio:.2f}",
-                             delta=f"Best: 1.00", delta_color="normal")
-                    st.caption("🦶 Two-footed balance")
+            left = pd.to_numeric(df['left_touches'], errors='coerce')
+            right = pd.to_numeric(df['right_touches'], errors='coerce')
+            valid_mask = (left > 0) & (right > 0)
+
+            if valid_mask.any():
+                ratios = left[valid_mask] / right[valid_mask]
+                avg_ratio = ratios.mean()
+                best_ratio = ratios.max()
+
+                # Determine which foot is better at the best ratio
+                best_ratio_idx = ratios.idxmax()
+                best_left = left[best_ratio_idx]
+                best_right = right[best_ratio_idx]
+
+                if best_ratio >= 1.0:
+                    best_foot = "L"
                 else:
-                    st.metric("L/R Touch Ratio", "N/A",
-                             delta=f"Best: 1.00", delta_color="normal")
-                    st.caption("🦶 Two-footed balance")
+                    best_foot = "R"
+
+                st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}",
+                         delta=f"Best: {best_ratio:.2f} {best_foot}", delta_color="normal")
+                st.caption("🦶 Two-footed balance")
+            else:
+                st.metric("L/R Touch Ratio (avg)", "N/A",
+                         delta="No data", delta_color="off")
+                st.caption("🦶 Two-footed balance")
 
     st.markdown("---")
 
