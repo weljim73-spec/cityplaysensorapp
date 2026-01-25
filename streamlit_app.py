@@ -2274,13 +2274,20 @@ with tab7:
                     with cols[idx]:
                         if col_name in df.columns:
                             if col_name == 'position':
-                                # For position, show most common
+                                # For position, show most common (filter out empty strings)
                                 values = df[col_name].dropna()
+                                values = values[values.str.strip() != ''] if len(values) > 0 else values
                                 if len(values) > 0:
                                     most_common = values.mode()
                                     if len(most_common) > 0:
-                                        st.metric(label, most_common[0])
+                                        st.metric(label, str(most_common[0]))
                                         st.caption(description)
+                                    else:
+                                        st.metric(label, "N/A")
+                                        st.caption(description)
+                                else:
+                                    st.metric(label, "N/A")
+                                    st.caption(description)
                             elif col_name == 'work_rate':
                                 # For work rate, show average (numeric field)
                                 values = pd.to_numeric(df[col_name], errors='coerce').dropna()
