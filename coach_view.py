@@ -916,47 +916,61 @@ with tab1:
     st.header("📊 Training Dashboard")
     st.markdown("*High-level overview of Mia's training performance*")
 
-    # Key Performance Indicators (Current, Best, Average)
+    # Key Performance Indicators (Averages with Best)
     st.subheader("⭐ Key Performance Indicators")
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         if 'top_speed' in df.columns:
-            current_speed = pd.to_numeric(df['top_speed'], errors='coerce').iloc[-1]
-            best_speed = pd.to_numeric(df['top_speed'], errors='coerce').max()
             avg_speed = pd.to_numeric(df['top_speed'], errors='coerce').mean()
-            st.metric("Top Speed (mph)", f"{current_speed:.1f}",
-                     delta=f"Best: {best_speed:.1f} | Avg: {avg_speed:.1f}")
+            best_speed = pd.to_numeric(df['top_speed'], errors='coerce').max()
+            st.metric("Top Speed (mph)", f"{avg_speed:.1f}",
+                     delta=f"Best: {best_speed:.1f}", delta_color="normal")
             st.caption("🚀 Maximum velocity")
 
     with col2:
         if 'intense_turns' in df.columns:
-            current_turns = pd.to_numeric(df['intense_turns'], errors='coerce').iloc[-1]
-            best_turns = pd.to_numeric(df['intense_turns'], errors='coerce').max()
             avg_turns = pd.to_numeric(df['intense_turns'], errors='coerce').mean()
-            st.metric("Intense Turns", f"{current_turns:.0f}",
-                     delta=f"Best: {best_turns:.0f} | Avg: {avg_turns:.1f}")
+            best_turns = pd.to_numeric(df['intense_turns'], errors='coerce').max()
+            st.metric("Intense Turns", f"{avg_turns:.1f}",
+                     delta=f"Best: {best_turns:.1f}", delta_color="normal")
             st.caption("🔄 High-speed direction changes")
 
     with col3:
-        if 'ball_touches' in df.columns:
-            ball_df = df[df['ball_touches'] > 0]
-            if len(ball_df) > 0:
-                current_touches = pd.to_numeric(ball_df['ball_touches'], errors='coerce').iloc[-1]
-                best_touches = pd.to_numeric(ball_df['ball_touches'], errors='coerce').max()
-                avg_touches = pd.to_numeric(ball_df['ball_touches'], errors='coerce').mean()
-                st.metric("Ball Touches", f"{current_touches:.0f}",
-                         delta=f"Best: {best_touches:.0f} | Avg: {avg_touches:.1f}")
-                st.caption("⚽ Technical ball work")
+        if 'left_kicking_power_mph' in df.columns and 'right_kicking_power_mph' in df.columns:
+            left_power = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce')
+            right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce')
+
+            best_left = left_power.max()
+            best_right = right_power.max()
+
+            if best_left >= best_right:
+                top_power = best_left
+                foot = "L"
+            else:
+                top_power = best_right
+                foot = "R"
+
+            st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
+                     delta=f"Best: {top_power:.1f}", delta_color="normal")
+            st.caption("⚽ Strongest kick recorded")
 
     with col4:
-        if 'num_sprints' in df.columns:
-            current_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').iloc[-1]
-            best_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').max()
-            avg_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').mean()
-            st.metric("Sprints", f"{current_sprints:.0f}",
-                     delta=f"Best: {best_sprints:.0f} | Avg: {avg_sprints:.1f}")
-            st.caption("💨 Explosive efforts")
+        if 'left_touches' in df.columns and 'right_touches' in df.columns:
+            ball_df = df[(df['left_touches'] > 0) | (df['right_touches'] > 0)]
+            if len(ball_df) > 0:
+                left_total = pd.to_numeric(ball_df['left_touches'], errors='coerce').sum()
+                right_total = pd.to_numeric(ball_df['right_touches'], errors='coerce').sum()
+                total = left_total + right_total
+                if total > 0 and right_total > 0:
+                    lr_ratio = left_total / right_total
+                    st.metric("L/R Touch Ratio", f"{lr_ratio:.2f}",
+                             delta=f"Best: 1.00", delta_color="normal")
+                    st.caption("🦶 Two-footed balance")
+                else:
+                    st.metric("L/R Touch Ratio", "N/A",
+                             delta=f"Best: 1.00", delta_color="normal")
+                    st.caption("🦶 Two-footed balance")
 
     st.markdown("---")
 
