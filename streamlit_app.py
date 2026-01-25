@@ -1289,12 +1289,14 @@ with tab1:
                     if best_left >= best_right:
                         top_power = best_left
                         foot = "L"
+                        best_foot = "L"
                     else:
                         top_power = best_right
                         foot = "R"
+                        best_foot = "R"
 
                     st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
-                             delta=f"Best: {top_power:.1f}", delta_color="normal")
+                             delta=f"Best: {top_power:.1f} {best_foot}", delta_color="normal")
 
         with col4:
             if 'left_touches' in df.columns and 'right_touches' in df.columns:
@@ -1307,18 +1309,8 @@ with tab1:
                     avg_ratio = ratios.mean()
                     best_ratio = ratios.max()
 
-                    # Determine which foot is better at the best ratio
-                    best_ratio_idx = ratios.idxmax()
-                    best_left = left[best_ratio_idx]
-                    best_right = right[best_ratio_idx]
-
-                    if best_ratio >= 1.0:
-                        best_foot = "L"
-                    else:
-                        best_foot = "R"
-
                     st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}",
-                             delta=f"Best: {best_ratio:.2f} {best_foot}", delta_color="normal")
+                             delta=f"Best: {best_ratio:.2f}", delta_color="normal")
                 else:
                     st.metric("L/R Touch Ratio (avg)", "N/A",
                              delta="No data", delta_color="off")
