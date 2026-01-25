@@ -302,6 +302,569 @@ def parse_ocr_text(text):
 
     return extracted
 
+def generate_executive_summary(df):
+    """Generate a 500-word executive summary of Mia's current status"""
+    summary = "📋 EXECUTIVE SUMMARY\n" + "-" * 80 + "\n"
+
+    # Collect detailed metrics for comprehensive summary
+    sessions = len(df)
+
+    # Date range
+    date_info = ""
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        days_span = (df['date'].max() - df['date'].min()).days
+        date_info = f" over {days_span} days"
+
+    # AGILITY ANALYSIS (Most Important)
+    agility_status = ""
+    intense_current = 0
+    intense_best = 0
+    intense_trend = ""
+    if 'intense_turns' in df.columns:
+        intense_vals = pd.to_numeric(df['intense_turns'], errors='coerce').dropna()
+        if len(intense_vals) > 0:
+            intense_current = intense_vals.tail(3).mean()
+            intense_best = intense_vals.max()
+            overall_avg = intense_vals.mean()
+
+            if len(intense_vals) > 3:
+                early_avg = intense_vals.head(3).mean()
+                recent_avg = intense_vals.tail(3).mean()
+                if recent_avg > early_avg * 1.2:
+                    intense_trend = "significant improvement"
+                elif recent_avg > early_avg:
+                    intense_trend = "steady growth"
+                else:
+                    intense_trend = "stable performance"
+
+            if intense_current >= 10:
+                agility_status = "elite-level agility with consistent high-speed direction changes"
+            elif intense_current >= 7:
+                agility_status = "strong agility development, approaching elite performance"
+            elif intense_current >= 5:
+                agility_status = "solid agility foundation with room to reach elite levels"
+            else:
+                agility_status = "early-stage agility development with significant growth opportunity"
+
+    # SPEED & POWER ANALYSIS
+    speed_status = ""
+    speed_current = 0
+    speed_best = 0
+    if 'top_speed' in df.columns:
+        speed_vals = pd.to_numeric(df['top_speed'], errors='coerce').dropna()
+        if len(speed_vals) > 0:
+            speed_current = speed_vals.tail(3).mean()
+            speed_best = speed_vals.max()
+
+            if speed_current >= speed_best * 0.95:
+                speed_status = "performing at peak speed"
+            elif speed_current >= speed_vals.mean() * 1.05:
+                speed_status = "showing recent speed gains"
+            else:
+                speed_status = "maintaining speed development"
+
+    # TURN SPEED DYNAMICS
+    acceleration_status = ""
+    if 'avg_turn_entry' in df.columns and 'avg_turn_exit' in df.columns:
+        entry = pd.to_numeric(df['avg_turn_entry'], errors='coerce').dropna()
+        exit_speed = pd.to_numeric(df['avg_turn_exit'], errors='coerce').dropna()
+
+        if len(entry) > 0 and len(exit_speed) > 0:
+            avg_entry = entry.mean()
+            avg_exit = exit_speed.mean()
+            speed_diff = avg_exit - avg_entry
+
+            if speed_diff > 0.5:
+                acceleration_status = "She shows explosive acceleration out of cuts, a critical game-speed skill"
+            elif speed_diff > 0:
+                acceleration_status = "She maintains speed through turns with slight acceleration"
+            else:
+                acceleration_status = "Her turn exit speed presents an opportunity for explosive power development"
+
+    # BUILD COMPREHENSIVE NARRATIVE
+    summary += f"Based on analysis of {sessions} training sessions{date_info}, "
+
+    # Overall status
+    if agility_status:
+        summary += f"Mia demonstrates {agility_status}. "
+        if intense_trend:
+            summary += f"Her intense turns show {intense_trend}, currently averaging {intense_current:.1f} per session with a best of {intense_best:.0f}. "
+
+    # Speed
+    if speed_status:
+        summary += f"In terms of speed development, she is {speed_status}, with recent sessions averaging {speed_current:.1f} mph against a personal best of {speed_best:.1f} mph. "
+
+    # Turn dynamics
+    if acceleration_status:
+        summary += f"{acceleration_status}. "
+
+    # PRIMARY FOCUS AREAS
+    summary += "\n\nPRIMARY FOCUS AREAS: "
+    focus_items = []
+
+    if intense_current < 10:
+        focus_items.append(f"Increase intense turns from {intense_current:.1f} to 10+ per session through high-speed cutting drills and small-sided games")
+
+    if acceleration_status and "opportunity" in acceleration_status:
+        focus_items.append("Develop explosive acceleration out of turns with plyometrics and first-step quickness drills")
+
+    if not focus_items:
+        focus_items.append("Continue balanced development while maintaining current momentum across all metrics")
+
+    for i, item in enumerate(focus_items[:2], 1):
+        summary += f"\n  {i}. {item}"
+
+    summary += "\n\n"
+    return summary
+
+def generate_30day_change_summary(df):
+    """Generate a 500-word narrative summary analyzing trends over the past 30 days"""
+    summary = "📅 30-DAY CHANGE SUMMARY\n" + "-" * 80 + "\n"
+
+    # Ensure date column exists and is datetime
+    if 'date' not in df.columns:
+        summary += "Date information not available for 30-day analysis.\n\n"
+        return summary
+
+    df = df.copy()
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df = df.dropna(subset=['date'])
+    df = df.sort_values('date')
+
+    if len(df) == 0:
+        summary += "No date data available for analysis.\n\n"
+        return summary
+
+    # Get the most recent date
+    latest_date = df['date'].max()
+
+    # Calculate 30 days ago
+    thirty_days_ago = latest_date - pd.Timedelta(days=30)
+
+    # Get all sessions in the last 30 days
+    last_30_days = df[df['date'] > thirty_days_ago].copy()
+
+    # Get sessions from before 30 days ago for comparison
+    before_30_days = df[df['date'] <= thirty_days_ago].copy()
+
+    if len(last_30_days) == 0:
+        summary += f"No sessions recorded in the past 30 days from {latest_date.strftime('%b %d, %Y')}.\n\n"
+        return summary
+
+    sessions_count = len(last_30_days)
+    date_range_start = last_30_days['date'].min()
+    date_range_end = last_30_days['date'].max()
+    actual_days = (date_range_end - date_range_start).days + 1
+
+    # Start narrative
+    summary += f"Over the past 30 days ({date_range_start.strftime('%b %d')} - {date_range_end.strftime('%b %d, %Y')}), "
+    summary += f"Mia completed {sessions_count} training session{'s' if sessions_count != 1 else ''} "
+    summary += f"spanning {actual_days} day{'s' if actual_days != 1 else ''}. "
+
+    # AGILITY TRENDS
+    agility_narrative = ""
+    if 'intense_turns' in df.columns:
+        recent_intense = pd.to_numeric(last_30_days['intense_turns'], errors='coerce').dropna()
+        if len(recent_intense) > 0:
+            recent_avg = recent_intense.mean()
+            recent_max = recent_intense.max()
+            recent_trend = ""
+
+            # Check trend within the 30 days
+            if len(recent_intense) > 2:
+                first_half_avg = recent_intense.iloc[:len(recent_intense)//2].mean()
+                second_half_avg = recent_intense.iloc[len(recent_intense)//2:].mean()
+
+                if second_half_avg > first_half_avg * 1.15:
+                    recent_trend = "surging upward"
+                elif second_half_avg > first_half_avg * 1.05:
+                    recent_trend = "trending positively"
+                elif second_half_avg < first_half_avg * 0.85:
+                    recent_trend = "declining"
+                else:
+                    recent_trend = "holding steady"
+
+            # Compare to historical baseline
+            comparison = ""
+            if len(before_30_days) > 0 and 'intense_turns' in before_30_days.columns:
+                baseline_intense = pd.to_numeric(before_30_days['intense_turns'], errors='coerce').dropna()
+                if len(baseline_intense) > 0:
+                    baseline_avg = baseline_intense.mean()
+                    pct_change = ((recent_avg - baseline_avg) / baseline_avg * 100) if baseline_avg > 0 else 0
+
+                    if pct_change > 20:
+                        comparison = f", representing a {pct_change:.0f}% improvement from her earlier baseline"
+                    elif pct_change > 5:
+                        comparison = f", showing {pct_change:.0f}% growth from previous performance"
+                    elif pct_change < -10:
+                        comparison = f", down {abs(pct_change):.0f}% from her earlier average"
+
+            agility_narrative = f"Her agility development shows intense turns averaging {recent_avg:.1f} per session with a peak of {recent_max:.0f}, {recent_trend}{comparison}. "
+
+    # SPEED & POWER TRENDS
+    speed_narrative = ""
+    if 'top_speed' in df.columns:
+        recent_speed = pd.to_numeric(last_30_days['top_speed'], errors='coerce').dropna()
+        if len(recent_speed) > 0:
+            recent_avg_speed = recent_speed.mean()
+            recent_max_speed = recent_speed.max()
+
+            speed_consistency = ""
+            if recent_speed.std() < 0.5:
+                speed_consistency = "with excellent consistency"
+            elif recent_speed.std() < 1.0:
+                speed_consistency = "showing reliable performance"
+            else:
+                speed_consistency = "with some variability"
+
+            speed_narrative = f"Speed metrics reveal an average top speed of {recent_avg_speed:.1f} mph (best: {recent_max_speed:.1f} mph) {speed_consistency}. "
+
+    # TURN SPEED DYNAMICS
+    turn_narrative = ""
+    if 'avg_turn_entry' in df.columns and 'avg_turn_exit' in df.columns:
+        recent_entry = pd.to_numeric(last_30_days['avg_turn_entry'], errors='coerce').dropna()
+        recent_exit = pd.to_numeric(last_30_days['avg_turn_exit'], errors='coerce').dropna()
+
+        if len(recent_entry) > 0 and len(recent_exit) > 0:
+            avg_entry = recent_entry.mean()
+            avg_exit = recent_exit.mean()
+            speed_diff = avg_exit - avg_entry
+
+            if speed_diff > 0.5:
+                turn_narrative = f"Turn dynamics are exceptional, with exit speeds averaging {speed_diff:.1f} mph faster than entry speeds, demonstrating explosive acceleration out of cuts. "
+            elif speed_diff > 0:
+                turn_narrative = f"Turn performance shows positive exit acceleration ({speed_diff:+.1f} mph), indicating developing explosive power. "
+            else:
+                turn_narrative = f"Turn exit speeds are currently {abs(speed_diff):.1f} mph slower than entry speeds on average, presenting a clear opportunity for plyometric and explosive training focus. "
+
+    # TRAINING VOLUME
+    volume_narrative = ""
+    if 'duration' in df.columns:
+        recent_duration = pd.to_numeric(last_30_days['duration'], errors='coerce').dropna()
+        if len(recent_duration) > 0:
+            total_mins = recent_duration.sum()
+            avg_session = recent_duration.mean()
+            volume_narrative = f"Training volume totaled {total_mins:.0f} minutes ({total_mins/60:.1f} hours) with sessions averaging {avg_session:.0f} minutes each. "
+
+    # Assemble complete narrative
+    summary += agility_narrative
+    summary += speed_narrative
+    summary += turn_narrative
+    summary += volume_narrative
+
+    # Add closing insight
+    summary += "These trends provide a comprehensive view of recent development patterns and identify specific areas where focused training can accelerate progress toward elite performance.\n\n"
+
+    return summary
+
+def analyze_training_data(df):
+    """Analyze training data and generate comprehensive insights"""
+    insights = "🤖 COMPREHENSIVE TRAINING INSIGHTS REPORT\n"
+    insights += "=" * 80 + "\n"
+    insights += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    insights += f"Total Sessions Analyzed: {len(df)}\n"
+
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        date_range = (df['date'].max() - df['date'].min()).days
+        insights += f"Date Range: {df['date'].min().strftime('%b %d, %Y')} to {df['date'].max().strftime('%b %d, %Y')} ({date_range} days)\n"
+
+    insights += "\n"
+
+    # Generate executive summary
+    insights += generate_executive_summary(df)
+    insights += "\n"
+
+    # Generate 30-day change summary
+    insights += generate_30day_change_summary(df)
+    insights += "\n"
+
+    # 1. Training Volume Analysis
+    insights += "📊 TRAINING VOLUME ANALYSIS\n" + "-" * 80 + "\n"
+    if 'duration' in df.columns:
+        total_mins = pd.to_numeric(df['duration'], errors='coerce').sum()
+        avg_session = pd.to_numeric(df['duration'], errors='coerce').mean()
+        insights += f"  • Total Training Time: {total_mins:.0f} minutes ({total_mins/60:.1f} hours)\n"
+        insights += f"  • Average Session Length: {avg_session:.1f} minutes\n"
+
+    if 'training_type' in df.columns:
+        type_dist = df['training_type'].value_counts()
+        insights += f"\n  Training Distribution:\n"
+        for ttype, count in type_dist.items():
+            insights += f"    - {ttype}: {count} sessions ({count/len(df)*100:.1f}%)\n"
+
+    # 2. Performance Trends
+    insights += "\n📈 PERFORMANCE TRENDS\n" + "-" * 80 + "\n"
+
+    metrics_to_analyze = [
+        ('top_speed', 'Top Speed', 'mph'),
+        ('ball_touches', 'Ball Touches', 'touches'),
+        ('sprint_distance', 'Sprint Distance', 'yards')
+    ]
+
+    for metric, name, unit in metrics_to_analyze:
+        if metric in df.columns:
+            values = pd.to_numeric(df[metric], errors='coerce').dropna()
+            if len(values) > 1:
+                trend = "IMPROVING" if values.iloc[-1] > values.iloc[0] else "DECLINING"
+                change = ((values.iloc[-1] - values.iloc[0]) / values.iloc[0] * 100)
+                insights += f"  • {name}: {trend} ({change:+.1f}% from first to last session)\n"
+                insights += f"    Current: {values.iloc[-1]:.1f} {unit} | Best: {values.max():.1f} {unit} | Avg: {values.mean():.1f} {unit}\n"
+
+    # 3. Two-Footed Development
+    insights += "\n⚽ TWO-FOOTED DEVELOPMENT\n" + "-" * 80 + "\n"
+    if 'left_pct' in df.columns and 'right_pct' in df.columns:
+        left_avg = pd.to_numeric(df['left_pct'], errors='coerce').mean()
+        right_avg = pd.to_numeric(df['right_pct'], errors='coerce').mean()
+        insights += f"  • Left Foot Usage: {left_avg:.1f}%\n"
+        insights += f"  • Right Foot Usage: {right_avg:.1f}%\n"
+
+        if left_avg < 30:
+            insights += "  ⚠️ RECOMMENDATION: Increase left foot training to improve balance\n"
+        else:
+            insights += "  ✅ Good two-footed development - keep it up!\n"
+
+    # 4. Coach Analysis
+    insights += "\n👨‍🏫 COACH PERFORMANCE ANALYSIS\n" + "-" * 80 + "\n"
+    if 'coach' in df.columns:
+        for coach in df['coach'].dropna().unique():
+            coach_df = df[df['coach'] == coach]
+            insights += f"  Coach {coach} ({len(coach_df)} sessions):\n"
+
+            if 'top_speed' in df.columns:
+                avg_speed = pd.to_numeric(coach_df['top_speed'], errors='coerce').mean()
+                insights += f"    - Avg Top Speed: {avg_speed:.2f} mph\n"
+
+            if 'ball_touches' in df.columns:
+                avg_touches = pd.to_numeric(coach_df['ball_touches'], errors='coerce').mean()
+                if not pd.isna(avg_touches):
+                    insights += f"    - Avg Ball Touches: {avg_touches:.0f}\n"
+
+    # 5. Agility Analysis (THE CORE FOCUS)
+    insights += "\n🔄 AGILITY DEVELOPMENT ANALYSIS\n" + "-" * 80 + "\n"
+
+    # Intense turns - MOST IMPORTANT
+    if 'intense_turns' in df.columns:
+        intense = pd.to_numeric(df['intense_turns'], errors='coerce')
+        avg_intense = intense.mean()
+        max_intense = intense.max()
+        insights += f"  ⚡ INTENSE TURNS (Game-Speed Agility at 9+ mph):\n"
+        insights += f"    Average: {avg_intense:.1f} | Best: {max_intense:.0f}\n"
+
+    # Turn speed relationship (EXIT vs ENTRY)
+    if 'avg_turn_entry' in df.columns and 'avg_turn_exit' in df.columns:
+        entry = pd.to_numeric(df['avg_turn_entry'], errors='coerce')
+        exit_s = pd.to_numeric(df['avg_turn_exit'], errors='coerce')
+        avg_entry = entry.mean()
+        avg_exit = exit_s.mean()
+        speed_diff = avg_exit - avg_entry
+
+        insights += f"\n  💨 TURN SPEED DYNAMICS:\n"
+        insights += f"    Entry Speed: {avg_entry:.1f} mph | Exit Speed: {avg_exit:.1f} mph\n"
+        insights += f"    Speed Change: {speed_diff:+.1f} mph\n"
+
+        if speed_diff > 0.5:
+            insights += f"    ✅ EXPLOSIVE: Accelerating out of cuts - excellent power!\n"
+        elif speed_diff < 0:
+            insights += f"    ⚠️ FOCUS: Exit slower than entry - work on explosive acceleration\n"
+            insights += f"       → Plyometric training, first-step drills\n"
+
+    # Turn directional balance
+    if all(col in df.columns for col in ['left_turns', 'right_turns', 'back_turns']):
+        left_avg = pd.to_numeric(df['left_turns'], errors='coerce').mean()
+        right_avg = pd.to_numeric(df['right_turns'], errors='coerce').mean()
+        back_avg = pd.to_numeric(df['back_turns'], errors='coerce').mean()
+
+        insights += f"\n  ↔️ DIRECTIONAL AGILITY:\n"
+        insights += f"    Left Turns: {left_avg:.1f} | Right Turns: {right_avg:.1f} | Back Turns: {back_avg:.1f}\n"
+
+        if left_avg > 0 and right_avg > 0:
+            ratio = left_avg / right_avg
+            if 0.7 <= ratio <= 1.3:
+                insights += f"    ✅ Balanced left/right development\n"
+
+    # 6. Speed & Power Analysis
+    insights += "\n🚀 SPEED & POWER DEVELOPMENT\n" + "-" * 80 + "\n"
+
+    if 'top_speed' in df.columns:
+        speed = pd.to_numeric(df['top_speed'], errors='coerce')
+        insights += f"  Top Speed: Current Max {speed.max():.1f} mph | Avg {speed.mean():.1f} mph\n"
+
+        # Trend analysis
+        if len(speed) > 3:
+            recent_trend = speed.tail(3).mean() - speed.head(3).mean()
+            if recent_trend > 0.5:
+                insights += f"  ✅ Improving: +{recent_trend:.1f} mph in recent sessions\n"
+            elif recent_trend < -0.5:
+                insights += f"  ⚠️ Declining: {recent_trend:.1f} mph - may need recovery\n"
+
+    if 'kicking_power' in df.columns:
+        kick = pd.to_numeric(df['kicking_power'], errors='coerce')
+        insights += f"\n  Kicking Power: Max {kick.max():.1f} mph | Avg {kick.mean():.1f} mph\n"
+
+        # Left vs Right kicking power
+        if 'left_kicking_power_mph' in df.columns and 'right_kicking_power_mph' in df.columns:
+            left_kick = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce').mean()
+            right_kick = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').mean()
+            if pd.notna(left_kick) and pd.notna(right_kick):
+                insights += f"  Left Foot: {left_kick:.1f} mph | Right Foot: {right_kick:.1f} mph\n"
+                diff = abs(left_kick - right_kick)
+                if diff < 3:
+                    insights += f"  ✅ Balanced kicking power between feet\n"
+                else:
+                    weaker_foot = "left" if left_kick < right_kick else "right"
+                    insights += f"  ⚠️ {weaker_foot.capitalize()} foot needs power development\n"
+
+    if 'sprint_distance' in df.columns and 'num_sprints' in df.columns:
+        sprint_dist = pd.to_numeric(df['sprint_distance'], errors='coerce')
+        num_sprints = pd.to_numeric(df['num_sprints'], errors='coerce')
+        insights += f"\n  Sprint Volume: Avg {sprint_dist.mean():.0f} yards over {num_sprints.mean():.1f} sprints\n"
+
+    # 7. Technical Skill - Two-Footed & Ball Work
+    insights += "\n⚽ TECHNICAL DEVELOPMENT\n" + "-" * 80 + "\n"
+
+    if 'ball_touches' in df.columns:
+        touches = pd.to_numeric(df['ball_touches'], errors='coerce')
+        ball_sessions = touches.notna().sum()
+        insights += f"  Ball Work Frequency: {ball_sessions}/{len(df)} sessions ({ball_sessions/len(df)*100:.0f}%)\n"
+        if ball_sessions > 0:
+            insights += f"  Avg Touches: {touches.mean():.0f} | Max: {touches.max():.0f}\n"
+
+    # Left/Right touch balance and ratio
+    if 'left_touches' in df.columns and 'right_touches' in df.columns:
+        left_touch = pd.to_numeric(df['left_touches'], errors='coerce')
+        right_touch = pd.to_numeric(df['right_touches'], errors='coerce')
+
+        # Calculate ratios for sessions where both exist
+        ratios = []
+        for idx, row in df.iterrows():
+            l = pd.to_numeric(row.get('left_touches'), errors='coerce')
+            r = pd.to_numeric(row.get('right_touches'), errors='coerce')
+            if pd.notna(l) and pd.notna(r) and l > 0 and r > 0:
+                ratios.append(l / r)
+
+        if ratios:
+            avg_ratio = sum(ratios) / len(ratios)
+            best_ratio = min(ratios, key=lambda x: abs(x - 0.5))
+            insights += f"\n  Left/Right Touch Ratio:\n"
+            insights += f"    Average: {avg_ratio:.2f} | Best: {best_ratio:.2f} | Goal: 0.50\n"
+
+            if avg_ratio >= 0.5:
+                insights += f"    ✅ GOAL MET: Excellent left foot development!\n"
+            elif avg_ratio >= 0.4:
+                insights += f"    📈 CLOSE: Almost at goal - keep working left foot!\n"
+            else:
+                insights += f"    ⚠️ FOCUS: Need more left foot touches (currently {avg_ratio:.0%} of right)\n"
+
+    # 8. Workload & Recovery
+    insights += "\n📊 TRAINING LOAD MANAGEMENT\n" + "-" * 80 + "\n"
+
+    if 'duration' in df.columns:
+        duration = pd.to_numeric(df['duration'], errors='coerce')
+        total_mins = duration.sum()
+        insights += f"  Total Volume: {total_mins:.0f} minutes ({total_mins/60:.1f} hours)\n"
+        insights += f"  Avg Session: {duration.mean():.1f} minutes\n"
+
+    if 'date' in df.columns:
+        date_range = (df['date'].max() - df['date'].min()).days
+        sessions_per_week = len(df) / (date_range / 7) if date_range > 0 else 0
+        insights += f"  Training Frequency: {sessions_per_week:.1f} sessions/week\n"
+
+        if sessions_per_week < 3:
+            insights += f"  ⚠️ Consider increasing to 3-4 sessions/week for optimal development\n"
+
+    if 'intensity' in df.columns:
+        intensity_dist = df['intensity'].value_counts(normalize=True)
+        insights += f"\n  Intensity Distribution:\n"
+        for intensity, pct in intensity_dist.items():
+            insights += f"    {intensity}: {pct*100:.0f}%\n"
+
+    # 9. Metric Relationships & Correlations
+    insights += "\n🔗 PERFORMANCE RELATIONSHIPS\n" + "-" * 80 + "\n"
+
+    # Agility vs Speed
+    if 'intense_turns' in df.columns and 'top_speed' in df.columns:
+        intense_vals = pd.to_numeric(df['intense_turns'], errors='coerce')
+        speed_vals = pd.to_numeric(df['top_speed'], errors='coerce')
+        valid_mask = intense_vals.notna() & speed_vals.notna()
+
+        if valid_mask.sum() > 3:
+            correlation = intense_vals[valid_mask].corr(speed_vals[valid_mask])
+            insights += f"  Agility-Speed Correlation: {correlation:.2f}\n"
+
+    # Ball work vs Distance
+    if 'ball_touches' in df.columns and 'total_distance' in df.columns:
+        touches_vals = pd.to_numeric(df['ball_touches'], errors='coerce')
+        dist_vals = pd.to_numeric(df['total_distance'], errors='coerce')
+
+        if touches_vals.notna().any() and dist_vals.notna().any():
+            insights += f"\n  Ball Work Intensity:\n"
+            high_touch_sessions = df[touches_vals > touches_vals.median()]
+            if len(high_touch_sessions) > 0 and 'total_distance' in high_touch_sessions.columns:
+                avg_dist_high_touch = pd.to_numeric(high_touch_sessions['total_distance'], errors='coerce').mean()
+                insights += f"    High-touch sessions avg distance: {avg_dist_high_touch:.2f} miles\n"
+
+    # 10. Actionable Recommendations
+    insights += "\n💡 PERSONALIZED ACTION PLAN\n" + "-" * 80 + "\n"
+
+    recommendations = []
+
+    # Agility recommendations
+    if 'intense_turns' in df.columns:
+        intense_avg = pd.to_numeric(df['intense_turns'], errors='coerce').mean()
+        if intense_avg < 5:
+            recommendations.append("🎯 PRIORITY: Increase intense turns to 10+/session\n   → High-speed cutting drills, small-sided games")
+
+    # Exit speed recommendations
+    if 'avg_turn_entry' in df.columns and 'avg_turn_exit' in df.columns:
+        entry_avg = pd.to_numeric(df['avg_turn_entry'], errors='coerce').mean()
+        exit_avg = pd.to_numeric(df['avg_turn_exit'], errors='coerce').mean()
+        if exit_avg <= entry_avg:
+            recommendations.append("⚡ Improve explosive power out of cuts\n   → Plyometrics, resistance training, first-step drills")
+
+    # Left foot development
+    if 'left_touches' in df.columns and 'right_touches' in df.columns:
+        left_avg = pd.to_numeric(df['left_touches'], errors='coerce').mean()
+        right_avg = pd.to_numeric(df['right_touches'], errors='coerce').mean()
+        if left_avg > 0 and right_avg > 0:
+            ratio = left_avg / right_avg
+            if ratio < 0.4:
+                recommendations.append("👣 Increase left foot training for better balance\n   → Dedicated left-foot drills, force left-only touches")
+
+    # Speed development
+    if 'top_speed' in df.columns:
+        speed = pd.to_numeric(df['top_speed'], errors='coerce')
+        if len(speed) > 3:
+            recent = speed.tail(3).mean()
+            if recent < speed.max() * 0.9:
+                recommendations.append("🚀 Focus on maintaining top speed\n   → Sprint intervals, resistance training, proper recovery")
+
+    if recommendations:
+        for i, rec in enumerate(recommendations, 1):
+            insights += f"  {i}. {rec}\n\n"
+    else:
+        insights += "  ✅ All metrics show balanced, effective development!\n"
+        insights += "     Continue current training approach.\n"
+
+    # 11. Next Milestones
+    insights += "\n🎯 NEXT MILESTONE TARGETS\n" + "-" * 80 + "\n"
+
+    if 'top_speed' in df.columns:
+        current_speed = pd.to_numeric(df['top_speed'], errors='coerce').max()
+        next_target = ((current_speed // 0.5) + 1) * 0.5
+        insights += f"  • Top Speed: Current {current_speed:.1f} mph → Target {next_target:.1f} mph\n"
+
+    if 'ball_touches' in df.columns:
+        current_touches = pd.to_numeric(df['ball_touches'], errors='coerce').max()
+        next_target = ((current_touches // 50) + 1) * 50
+        insights += f"  • Ball Touches: Current {current_touches:.0f} → Target {next_target:.0f}\n"
+
+    insights += "\n" + "=" * 80 + "\n"
+    insights += "Keep pushing boundaries and tracking progress! 🌟⚽\n"
+
+    return insights
+
 # Main App Header
 st.markdown('<div class="main-header">⚽ Mia Training Tracker</div>', unsafe_allow_html=True)
 
@@ -698,63 +1261,61 @@ with tab5:
                 if pr_date:
                     st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 6: AI Insights (basic version - can be enhanced)
+# Tab 6: AI Insights - Comprehensive Analysis
 with tab6:
     st.header("🤖 AI Insights")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
         st.warning("📊 No data loaded. Please upload your Excel file in the sidebar.")
     else:
-        df = st.session_state.df.copy()
+        st.markdown("""
+        Click the button below to generate a comprehensive training insights report analyzing:
+        - Executive summary of current performance
+        - 30-day trend analysis
+        - Performance metrics and trends
+        - Coach performance analysis
+        - Agility and speed development
+        - Technical skills assessment
+        - Personalized action plan
+        - Next milestone targets
+        """)
 
-        st.subheader("Training Summary")
-        st.write(f"**Total Sessions:** {len(df)}")
+        st.markdown("---")
 
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            date_range = (df['date'].max() - df['date'].min()).days
-            st.write(f"**Date Range:** {df['date'].min().strftime('%b %d, %Y')} to {df['date'].max().strftime('%b %d, %Y')} ({date_range} days)")
+        # Initialize session state for insights
+        if 'ai_insights_generated' not in st.session_state:
+            st.session_state.ai_insights_generated = False
+            st.session_state.ai_insights_report = ""
 
-        st.subheader("Key Performance Indicators")
+        # Button to generate insights
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🔍 Generate Comprehensive AI Insights", type="primary", use_container_width=True):
+                with st.spinner("🤖 Analyzing training data and generating insights..."):
+                    df = st.session_state.df.copy()
+                    st.session_state.ai_insights_report = analyze_training_data(df)
+                    st.session_state.ai_insights_generated = True
 
-        # Agility Status
-        if 'intense_turns' in df.columns:
-            intense_vals = pd.to_numeric(df['intense_turns'], errors='coerce').dropna()
-            if len(intense_vals) > 0:
-                avg_intense = intense_vals.mean()
-                st.write(f"**Intense Turns Average:** {avg_intense:.1f} per session")
-                if avg_intense >= 10:
-                    st.success("✅ Elite-level agility!")
-                elif avg_intense >= 7:
-                    st.info("💪 Strong agility development")
-                elif avg_intense >= 5:
-                    st.warning("⚠️ Solid foundation - push for 10+")
-                else:
-                    st.error("🎯 Focus area: Build to 10+ intense turns per session")
+        # Display the report if generated
+        if st.session_state.ai_insights_generated and st.session_state.ai_insights_report:
+            st.markdown("---")
 
-        # Speed Status
-        if 'top_speed' in df.columns:
-            speed_vals = pd.to_numeric(df['top_speed'], errors='coerce').dropna()
-            if len(speed_vals) > 0:
-                avg_speed = speed_vals.mean()
-                max_speed = speed_vals.max()
-                st.write(f"**Top Speed:** {max_speed:.1f} mph (avg: {avg_speed:.1f} mph)")
+            # Add a download button for the report
+            st.download_button(
+                label="📥 Download Report as Text File",
+                data=st.session_state.ai_insights_report,
+                file_name=f"mia_training_insights_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                mime="text/plain"
+            )
 
-        # L/R Balance
-        if 'left_touches' in df.columns and 'right_touches' in df.columns:
-            left = pd.to_numeric(df['left_touches'], errors='coerce')
-            right = pd.to_numeric(df['right_touches'], errors='coerce')
-            valid_mask = (left > 0) & (right > 0)
+            # Display the report in a code block for proper formatting
+            st.code(st.session_state.ai_insights_report, language=None)
 
-            if valid_mask.any():
-                ratios = left[valid_mask] / right[valid_mask]
-                avg_ratio = ratios.mean()
-                st.write(f"**L/R Touch Ratio:** {avg_ratio:.2f}")
-                if avg_ratio >= 0.5:
-                    st.success("✅ Excellent two-footed balance!")
-                else:
-                    gap = 0.5 - avg_ratio
-                    st.warning(f"⚠️ Left foot needs {gap:.2f} more to reach 0.5 target")
+            # Add option to clear/regenerate
+            if st.button("🔄 Clear Report"):
+                st.session_state.ai_insights_generated = False
+                st.session_state.ai_insights_report = ""
+                st.rerun()
 
 if __name__ == "__main__":
     st.sidebar.markdown("---")
