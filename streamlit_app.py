@@ -1482,7 +1482,8 @@ with tab2:
                 plt.xticks(rotation=45)
 
         plt.tight_layout()
-        st.pyplot(fig)
+        st.pyplot(fig, use_container_width=True)
+        plt.close(fig)
 
 # Tab 3: Speed
 with tab3:
