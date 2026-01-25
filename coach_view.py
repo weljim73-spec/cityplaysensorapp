@@ -931,20 +931,46 @@ with tab3:
 
     st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
 
-    # Time filter
-    agility_time_filter = st.radio(
-        "Time Period",
-        ["All Time", "Last 30 Days"],
-        horizontal=True,
-        key="agility_time_filter"
-    )
+    # Time filter with date range display
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        agility_time_filter = st.radio(
+            "Time Period",
+            ["All Time", "Last 30 Days"],
+            horizontal=True,
+            key="agility_time_filter"
+        )
 
-    # Filter data based on selection
+    # Filter data based on selection and show date range
     df_agility = df.copy()
+    total_sessions = len(df_agility)
     if agility_time_filter == "Last 30 Days" and 'date' in df_agility.columns:
         df_agility['date'] = pd.to_datetime(df_agility['date'], errors='coerce')
         cutoff_date = datetime.now() - pd.Timedelta(days=30)
         df_agility = df_agility[df_agility['date'] >= cutoff_date]
+
+        if len(df_agility) > 0 and df_agility['date'].notna().any():
+            date_min = df_agility['date'].min().strftime('%b %d, %Y')
+            date_max = df_agility['date'].max().strftime('%b %d, %Y')
+            with col2:
+                st.markdown(f"**📅 {date_min} - {date_max}** ({len(df_agility)} of {total_sessions} sessions)")
+        else:
+            with col2:
+                st.markdown(f"**📊 {len(df_agility)} of {total_sessions} sessions**")
+    else:
+        if 'date' in df_agility.columns:
+            df_agility['date'] = pd.to_datetime(df_agility['date'], errors='coerce')
+            if df_agility['date'].notna().any():
+                date_min = df_agility['date'].min().strftime('%b %d, %Y')
+                date_max = df_agility['date'].max().strftime('%b %d, %Y')
+                with col2:
+                    st.markdown(f"**📅 {date_min} - {date_max}** ({total_sessions} sessions)")
+            else:
+                with col2:
+                    st.markdown(f"**📊 {total_sessions} sessions**")
+        else:
+            with col2:
+                st.markdown(f"**📊 {total_sessions} sessions**")
 
     agility_metrics = [
         ('intense_turns', 'Intense Turns', '⚡ MOST IMPORTANT - Direction changes at 9+ mph'),
@@ -973,20 +999,46 @@ with tab4:
 
     st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
 
-    # Time filter
-    ball_time_filter = st.radio(
-        "Time Period",
-        ["All Time", "Last 30 Days"],
-        horizontal=True,
-        key="ball_time_filter"
-    )
+    # Time filter with date range display
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        ball_time_filter = st.radio(
+            "Time Period",
+            ["All Time", "Last 30 Days"],
+            horizontal=True,
+            key="ball_time_filter"
+        )
 
-    # Filter data based on selection
+    # Filter data based on selection and show date range
     df_ball = df.copy()
+    total_sessions = len(df_ball)
     if ball_time_filter == "Last 30 Days" and 'date' in df_ball.columns:
         df_ball['date'] = pd.to_datetime(df_ball['date'], errors='coerce')
         cutoff_date = datetime.now() - pd.Timedelta(days=30)
         df_ball = df_ball[df_ball['date'] >= cutoff_date]
+
+        if len(df_ball) > 0 and df_ball['date'].notna().any():
+            date_min = df_ball['date'].min().strftime('%b %d, %Y')
+            date_max = df_ball['date'].max().strftime('%b %d, %Y')
+            with col2:
+                st.markdown(f"**📅 {date_min} - {date_max}** ({len(df_ball)} of {total_sessions} sessions)")
+        else:
+            with col2:
+                st.markdown(f"**📊 {len(df_ball)} of {total_sessions} sessions**")
+    else:
+        if 'date' in df_ball.columns:
+            df_ball['date'] = pd.to_datetime(df_ball['date'], errors='coerce')
+            if df_ball['date'].notna().any():
+                date_min = df_ball['date'].min().strftime('%b %d, %Y')
+                date_max = df_ball['date'].max().strftime('%b %d, %Y')
+                with col2:
+                    st.markdown(f"**📅 {date_min} - {date_max}** ({total_sessions} sessions)")
+            else:
+                with col2:
+                    st.markdown(f"**📊 {total_sessions} sessions**")
+        else:
+            with col2:
+                st.markdown(f"**📊 {total_sessions} sessions**")
 
     ball_metrics = [
         ('ball_touches', 'Total Ball Touches', '📊 Overall volume per session'),
