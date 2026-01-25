@@ -1121,9 +1121,10 @@ with st.sidebar:
             st.info("💡 Upload an Excel file or configure Google Sheets")
 
 # Main tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📸 Upload & Extract",
     "📊 Analytics",
+    "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
     "🏆 Personal Records",
@@ -1381,8 +1382,79 @@ with tab2:
         plt.tight_layout()
         st.pyplot(fig)
 
-# Tab 3: Agility
+# Tab 3: Speed
 with tab3:
+    st.header("⚡ Speed Analysis")
+
+    if st.session_state.df is None or len(st.session_state.df) == 0:
+        st.warning("📊 No data loaded. Please upload your Excel file in the sidebar.")
+    else:
+        df = st.session_state.df.copy()
+
+        st.info("**What is Speed?**\n\nSpeed measures explosive power, acceleration, and top-end velocity in training sessions.")
+
+        # Time filter with date range display
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            speed_time_filter = st.radio(
+                "Time Period",
+                ["All Time", "Last 30 Days"],
+                horizontal=True,
+                key="speed_time_filter"
+            )
+
+        # Filter data based on selection and show date range
+        total_sessions = len(df)
+        if speed_time_filter == "Last 30 Days" and 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            df = df[df['date'] >= cutoff_date]
+
+            if len(df) > 0 and df['date'].notna().any():
+                date_min = df['date'].min().strftime('%b %d, %Y')
+                date_max = df['date'].max().strftime('%b %d, %Y')
+                with col2:
+                    st.markdown(f"**📅 {date_min} - {date_max}** ({len(df)} of {total_sessions} sessions)")
+            else:
+                with col2:
+                    st.markdown(f"**📊 {len(df)} of {total_sessions} sessions**")
+        else:
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                if df['date'].notna().any():
+                    date_min = df['date'].min().strftime('%b %d, %Y')
+                    date_max = df['date'].max().strftime('%b %d, %Y')
+                    with col2:
+                        st.markdown(f"**📅 {date_min} - {date_max}** ({total_sessions} sessions)")
+                else:
+                    with col2:
+                        st.markdown(f"**📊 {total_sessions} sessions**")
+            else:
+                with col2:
+                    st.markdown(f"**📊 {total_sessions} sessions**")
+
+        # Calculate speed statistics
+        speed_metrics = [
+            ('top_speed', 'Top Speed (mph)', '🚀 Maximum velocity achieved'),
+            ('num_sprints', 'Sprints', '💨 Number of sprint efforts'),
+            ('sprint_distance', 'Sprint Distance (yards)', '🏃 Total distance at sprint speed'),
+            ('accelerations', 'Accl/Decl', '⚡ Explosive movements and changes of pace'),
+        ]
+
+        cols = st.columns(3)
+        for idx, (col_name, label, description) in enumerate(speed_metrics):
+            with cols[idx % 3]:
+                if col_name in df.columns:
+                    values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+                    if len(values) > 0:
+                        avg_val = values.mean()
+                        best_val = values.max()
+
+                        st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                        st.caption(description)
+
+# Tab 4: Agility
+with tab4:
     st.header("🔄 Agility Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1454,8 +1526,8 @@ with tab3:
                         st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                         st.caption(description)
 
-# Tab 4: Ball Work
-with tab4:
+# Tab 5: Ball Work
+with tab5:
     st.header("⚽ Ball Work Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1509,6 +1581,8 @@ with tab4:
             ('ball_touches', 'Total Ball Touches', '📊 Overall volume per session'),
             ('left_touches', 'Left Foot Touches', '⬅️ Weak foot development'),
             ('right_touches', 'Right Foot Touches', '➡️ Dominant foot'),
+            ('left_releases', 'Left Foot Releases', '🎯 Weak foot passes/shots'),
+            ('right_releases', 'Right Foot Releases', '🎯 Dominant passes/shots'),
             ('left_kicking_power_mph', 'Left Foot Power (mph)', '💪 Weak foot striking'),
             ('right_kicking_power_mph', 'Right Foot Power (mph)', '💪 Dominant striking'),
         ]
@@ -1539,8 +1613,8 @@ with tab4:
                 st.metric("L/R Touch Ratio", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
                 st.caption("⚖️ Target: ≥ 0.5 for balance")
 
-# Tab 5: Personal Records
-with tab5:
+# Tab 6: Personal Records
+with tab6:
     st.header("🏆 Personal Records")
 
     if not st.session_state.personal_records:
@@ -1572,8 +1646,8 @@ with tab5:
                 if pr_date:
                     st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 6: AI Insights - Comprehensive Analysis
-with tab6:
+# Tab 7: AI Insights - Comprehensive Analysis
+with tab7:
     st.header("🤖 AI Insights")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:

@@ -786,9 +786,10 @@ st.session_state.pr_dates = pr_dates
 st.markdown(f'<div class="refresh-info">📊 Showing {len(df)} training sessions | Last refreshed: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Refresh page to see latest data</div>', unsafe_allow_html=True)
 
 # Create tabs - EXACTLY like main app
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🤖 AI Insights",
     "📊 Analytics",
+    "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
     "🏆 Personal Records",
@@ -925,8 +926,75 @@ with tab2:
     plt.tight_layout()
     st.pyplot(fig)
 
-# Tab 3: Agility - EXACT copy from main app
+# Tab 3: Speed
 with tab3:
+    st.header("⚡ Speed Analysis")
+
+    st.info("**What is Speed?**\n\nSpeed measures explosive power, acceleration, and top-end velocity in training sessions.")
+
+    # Time filter with date range display
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        speed_time_filter = st.radio(
+            "Time Period",
+            ["All Time", "Last 30 Days"],
+            horizontal=True,
+            key="speed_time_filter"
+        )
+
+    # Filter data based on selection and show date range
+    df_speed = df.copy()
+    total_sessions = len(df_speed)
+    if speed_time_filter == "Last 30 Days" and 'date' in df_speed.columns:
+        df_speed['date'] = pd.to_datetime(df_speed['date'], errors='coerce')
+        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        df_speed = df_speed[df_speed['date'] >= cutoff_date]
+
+        if len(df_speed) > 0 and df_speed['date'].notna().any():
+            date_min = df_speed['date'].min().strftime('%b %d, %Y')
+            date_max = df_speed['date'].max().strftime('%b %d, %Y')
+            with col2:
+                st.markdown(f"**📅 {date_min} - {date_max}** ({len(df_speed)} of {total_sessions} sessions)")
+        else:
+            with col2:
+                st.markdown(f"**📊 {len(df_speed)} of {total_sessions} sessions**")
+    else:
+        if 'date' in df_speed.columns:
+            df_speed['date'] = pd.to_datetime(df_speed['date'], errors='coerce')
+            if df_speed['date'].notna().any():
+                date_min = df_speed['date'].min().strftime('%b %d, %Y')
+                date_max = df_speed['date'].max().strftime('%b %d, %Y')
+                with col2:
+                    st.markdown(f"**📅 {date_min} - {date_max}** ({total_sessions} sessions)")
+            else:
+                with col2:
+                    st.markdown(f"**📊 {total_sessions} sessions**")
+        else:
+            with col2:
+                st.markdown(f"**📊 {total_sessions} sessions**")
+
+    # Calculate speed statistics
+    speed_metrics = [
+        ('top_speed', 'Top Speed (mph)', '🚀 Maximum velocity achieved'),
+        ('num_sprints', 'Sprints', '💨 Number of sprint efforts'),
+        ('sprint_distance', 'Sprint Distance (yards)', '🏃 Total distance at sprint speed'),
+        ('accelerations', 'Accl/Decl', '⚡ Explosive movements and changes of pace'),
+    ]
+
+    cols = st.columns(3)
+    for idx, (col_name, label, description) in enumerate(speed_metrics):
+        with cols[idx % 3]:
+            if col_name in df_speed.columns:
+                values = pd.to_numeric(df_speed[col_name], errors='coerce').dropna()
+                if len(values) > 0:
+                    avg_val = values.mean()
+                    best_val = values.max()
+
+                    st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                    st.caption(description)
+
+# Tab 4: Agility - EXACT copy from main app
+with tab4:
     st.header("🔄 Agility Analysis")
 
     st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
@@ -993,8 +1061,8 @@ with tab3:
                     st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                     st.caption(description)
 
-# Tab 4: Ball Work - EXACT copy from main app
-with tab4:
+# Tab 5: Ball Work - EXACT copy from main app
+with tab5:
     st.header("⚽ Ball Work Analysis")
 
     st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
@@ -1044,6 +1112,8 @@ with tab4:
         ('ball_touches', 'Total Ball Touches', '📊 Overall volume per session'),
         ('left_touches', 'Left Foot Touches', '⬅️ Weak foot development'),
         ('right_touches', 'Right Foot Touches', '➡️ Dominant foot'),
+        ('left_releases', 'Left Foot Releases', '🎯 Weak foot passes/shots'),
+        ('right_releases', 'Right Foot Releases', '🎯 Dominant passes/shots'),
         ('left_kicking_power_mph', 'Left Foot Power (mph)', '💪 Weak foot striking'),
         ('right_kicking_power_mph', 'Right Foot Power (mph)', '💪 Dominant striking'),
     ]
@@ -1074,8 +1144,8 @@ with tab4:
             st.metric("L/R Touch Ratio", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
             st.caption("⚖️ Target: ≥ 0.5 for balance")
 
-# Tab 5: Personal Records - EXACT copy from main app
-with tab5:
+# Tab 6: Personal Records - EXACT copy from main app
+with tab6:
     st.header("🏆 Personal Records")
 
     records = [
@@ -1104,8 +1174,8 @@ with tab5:
             if pr_date:
                 st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 6: Raw Data
-with tab6:
+# Tab 7: Raw Data
+with tab7:
     st.header("📋 Training Sessions - Raw Data")
 
     # Show recent sessions
