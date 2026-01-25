@@ -1602,38 +1602,27 @@ with tab7:
             # Create session labels with date and session name
             df_temp = df_match.copy()
 
-            # Debug: Check the actual data
-            st.write(f"DEBUG - Sample session_name values BEFORE processing: {df_temp['session_name'].head().tolist() if 'session_name' in df_temp.columns else 'No session_name column'}")
-            st.write(f"DEBUG - session_name dtype: {df_temp['session_name'].dtype if 'session_name' in df_temp.columns else 'N/A'}")
-            st.write(f"DEBUG - session_name empty string count: {(df_temp['session_name'] == '').sum() if 'session_name' in df_temp.columns else 'N/A'}")
-
+            # Sort by date if available (date is already converted earlier in load function)
             if 'date' in df_temp.columns:
-                st.write(f"DEBUG - Date values BEFORE conversion: {df_temp['date'].head().tolist()}")
-                df_temp['date'] = pd.to_datetime(df_temp['date'], errors='coerce')
-                st.write(f"DEBUG - Date values AFTER conversion: {df_temp['date'].head().tolist()}")
-                df_temp = df_temp.sort_values('date', ascending=False)
+                df_temp = df_temp.sort_values('date', ascending=False, na_position='last')
 
             session_options = []
             session_indices = []
 
-            # Check if we have the necessary columns
-            has_date = 'date' in df_temp.columns
-            has_session = 'session_name' in df_temp.columns
-
-            if has_date and has_session:
+            if 'session_name' in df_temp.columns:
                 for idx, row in df_temp.iterrows():
-                    session_val = row['session_name']
-                    date_val = row['date']
-                    st.write(f"DEBUG Row {idx}: session='{session_val}' (type={type(session_val)}), date={date_val}, session_notna={pd.notna(session_val)}, date_notna={pd.notna(date_val)}")
+                    # Only require session_name to be valid, date is optional
+                    if pd.notna(row['session_name']) and str(row['session_name']).strip() != '':
+                        # Try to include date if available
+                        if 'date' in df_temp.columns and pd.notna(row['date']):
+                            date_str = row['date'].strftime('%b %d, %Y')
+                            session_label = f"{date_str} - {row['session_name']}"
+                        else:
+                            # If no valid date, just use session name
+                            session_label = str(row['session_name'])
 
-                    # Check for empty strings too
-                    if pd.notna(row['date']) and pd.notna(row['session_name']) and str(row['session_name']).strip() != '':
-                        date_str = row['date'].strftime('%b %d, %Y')
-                        session_label = f"{date_str} - {row['session_name']}"
                         session_options.append(session_label)
                         session_indices.append(idx)
-
-            st.write(f"DEBUG - Found {len(session_options)} session options")
 
             if len(session_options) > 0:
                 selected_session = st.selectbox(
