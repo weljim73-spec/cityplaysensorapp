@@ -796,7 +796,9 @@ def analyze_training_data(df):
     if 'coach' in df.columns:
         for coach in df['coach'].dropna().unique():
             coach_df = df[df['coach'] == coach]
-            insights += f"  Coach {coach} ({len(coach_df)} sessions):\n"
+            # Display "No Coach" instead of "Solo"
+            coach_display = "No Coach" if str(coach).lower() == "solo" else coach
+            insights += f"  {coach_display} ({len(coach_df)} sessions):\n"
 
             if 'top_speed' in df.columns:
                 avg_speed = pd.to_numeric(coach_df['top_speed'], errors='coerce').mean()
@@ -1568,6 +1570,23 @@ with tab3:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
             df = df.sort_values('date')
 
+        # Coach filter
+        if 'coach' in df.columns:
+            coaches = df['coach'].dropna().unique().tolist()
+            # Replace "Solo" with "No Coach" in the display
+            coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+            coaches_display_map = dict(zip(coaches_display, coaches))
+
+            selected_coach_display = st.selectbox(
+                "Filter by Coach",
+                ["All Coaches"] + coaches_display,
+                key="analytics_coach_filter"
+            )
+
+            if selected_coach_display != "All Coaches":
+                selected_coach = coaches_display_map[selected_coach_display]
+                df = df[df['coach'] == selected_coach]
+
         # Chart selection
         chart_option = st.selectbox(
             "Select Chart",
@@ -1674,6 +1693,23 @@ with tab4:
 
         st.info("**What is Speed?**\n\nSpeed measures explosive power, acceleration, and top-end velocity in training sessions.")
 
+        # Coach filter
+        if 'coach' in df.columns:
+            coaches = df['coach'].dropna().unique().tolist()
+            # Replace "Solo" with "No Coach" in the display
+            coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+            coaches_display_map = dict(zip(coaches_display, coaches))
+
+            selected_coach_display = st.selectbox(
+                "Filter by Coach",
+                ["All Coaches"] + coaches_display,
+                key="speed_coach_filter"
+            )
+
+            if selected_coach_display != "All Coaches":
+                selected_coach = coaches_display_map[selected_coach_display]
+                df = df[df['coach'] == selected_coach]
+
         # Time filter with date range display
         col1, col2 = st.columns([1, 2])
         with col1:
@@ -1744,6 +1780,23 @@ with tab5:
         df = st.session_state.df.copy()
 
         st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
+
+        # Coach filter
+        if 'coach' in df.columns:
+            coaches = df['coach'].dropna().unique().tolist()
+            # Replace "Solo" with "No Coach" in the display
+            coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+            coaches_display_map = dict(zip(coaches_display, coaches))
+
+            selected_coach_display = st.selectbox(
+                "Filter by Coach",
+                ["All Coaches"] + coaches_display,
+                key="agility_coach_filter"
+            )
+
+            if selected_coach_display != "All Coaches":
+                selected_coach = coaches_display_map[selected_coach_display]
+                df = df[df['coach'] == selected_coach]
 
         # Time filter with date range display
         col1, col2 = st.columns([1, 2])
@@ -1817,6 +1870,23 @@ with tab6:
         df = st.session_state.df.copy()
 
         st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
+
+        # Coach filter
+        if 'coach' in df.columns:
+            coaches = df['coach'].dropna().unique().tolist()
+            # Replace "Solo" with "No Coach" in the display
+            coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+            coaches_display_map = dict(zip(coaches_display, coaches))
+
+            selected_coach_display = st.selectbox(
+                "Filter by Coach",
+                ["All Coaches"] + coaches_display,
+                key="ball_coach_filter"
+            )
+
+            if selected_coach_display != "All Coaches":
+                selected_coach = coaches_display_map[selected_coach_display]
+                df = df[df['coach'] == selected_coach]
 
         # Time filter with date range display
         col1, col2 = st.columns([1, 2])

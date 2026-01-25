@@ -536,7 +536,9 @@ def analyze_training_data(df):
     if 'coach' in df.columns:
         for coach in df['coach'].dropna().unique():
             coach_df = df[df['coach'] == coach]
-            insights += f"  Coach {coach} ({len(coach_df)} sessions):\n"
+            # Display "No Coach" instead of "Solo"
+            coach_display = "No Coach" if str(coach).lower() == "solo" else coach
+            insights += f"  {coach_display} ({len(coach_df)} sessions):\n"
 
             if 'top_speed' in df.columns:
                 avg_speed = pd.to_numeric(coach_df['top_speed'], errors='coerce').mean()
@@ -1128,10 +1130,29 @@ with tab2:
 with tab3:
     st.header("📊 Training Analytics")
 
+    df_analytics = df.copy()
+
+    # Coach filter
+    if 'coach' in df_analytics.columns:
+        coaches = df_analytics['coach'].dropna().unique().tolist()
+        # Replace "Solo" with "No Coach" in the display
+        coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+        coaches_display_map = dict(zip(coaches_display, coaches))
+
+        selected_coach_display = st.selectbox(
+            "Filter by Coach",
+            ["All Coaches"] + coaches_display,
+            key="analytics_coach_filter"
+        )
+
+        if selected_coach_display != "All Coaches":
+            selected_coach = coaches_display_map[selected_coach_display]
+            df_analytics = df_analytics[df_analytics['coach'] == selected_coach]
+
     # Ensure date column is datetime
-    if 'date' in df.columns:
-        df['date'] = pd.to_datetime(df['date'], errors='coerce')
-        df = df.sort_values('date')
+    if 'date' in df_analytics.columns:
+        df_analytics['date'] = pd.to_datetime(df_analytics['date'], errors='coerce')
+        df_analytics = df_analytics.sort_values('date')
 
     # Chart selection
     chart_option = st.selectbox(
@@ -1143,8 +1164,8 @@ with tab3:
     fig, ax = plt.subplots(figsize=(10, 6))
 
     if chart_option == "Top Speed Progress":
-        if 'top_speed' in df.columns and 'date' in df.columns:
-            speed_data = df[['date', 'top_speed']].dropna()
+        if 'top_speed' in df_analytics.columns and 'date' in df_analytics.columns:
+            speed_data = df_analytics[['date', 'top_speed']].dropna()
             ax.plot(speed_data['date'], speed_data['top_speed'], marker='o', linewidth=2, markersize=8)
             ax.set_xlabel('Date', fontsize=12)
             ax.set_ylabel('Top Speed (mph)', fontsize=12)
@@ -1153,8 +1174,8 @@ with tab3:
             plt.xticks(rotation=45)
 
     elif chart_option == "Ball Touches Progress":
-        if 'ball_touches' in df.columns and 'date' in df.columns:
-            touches_data = df[df['ball_touches'] > 0][['date', 'ball_touches']].dropna()
+        if 'ball_touches' in df_analytics.columns and 'date' in df_analytics.columns:
+            touches_data = df_analytics[df_analytics['ball_touches'] > 0][['date', 'ball_touches']].dropna()
             ax.plot(touches_data['date'], touches_data['ball_touches'], marker='s', linewidth=2, markersize=8, color='green')
             ax.set_xlabel('Date', fontsize=12)
             ax.set_ylabel('Ball Touches', fontsize=12)
@@ -1163,8 +1184,8 @@ with tab3:
             plt.xticks(rotation=45)
 
     elif chart_option == "Sprint Distance Progress":
-        if 'sprint_distance' in df.columns and 'date' in df.columns:
-            sprint_data = df[['date', 'sprint_distance']].dropna()
+        if 'sprint_distance' in df_analytics.columns and 'date' in df_analytics.columns:
+            sprint_data = df_analytics[['date', 'sprint_distance']].dropna()
             ax.plot(sprint_data['date'], sprint_data['sprint_distance'], marker='^', linewidth=2, markersize=8, color='orange')
             ax.set_xlabel('Date', fontsize=12)
             ax.set_ylabel('Sprint Distance (yards)', fontsize=12)
@@ -1173,18 +1194,18 @@ with tab3:
             plt.xticks(rotation=45)
 
     elif chart_option == "Kicking Power Progress":
-        if 'left_kicking_power_mph' in df.columns or 'right_kicking_power_mph' in df.columns:
-            left_vals = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce') if 'left_kicking_power_mph' in df.columns else pd.Series([None]*len(df))
-            right_vals = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce') if 'right_kicking_power_mph' in df.columns else pd.Series([None]*len(df))
+        if 'left_kicking_power_mph' in df_analytics.columns or 'right_kicking_power_mph' in df_analytics.columns:
+            left_vals = pd.to_numeric(df_analytics['left_kicking_power_mph'], errors='coerce') if 'left_kicking_power_mph' in df_analytics.columns else pd.Series([None]*len(df_analytics))
+            right_vals = pd.to_numeric(df_analytics['right_kicking_power_mph'], errors='coerce') if 'right_kicking_power_mph' in df_analytics.columns else pd.Series([None]*len(df_analytics))
 
             mask = left_vals.notna() | right_vals.notna()
-            df_filtered = df[mask].copy()
+            df_filtered = df_analytics[mask].copy()
 
-            if 'left_kicking_power_mph' in df.columns:
+            if 'left_kicking_power_mph' in df_analytics.columns:
                 left_filtered = left_vals[mask]
                 ax.plot(df_filtered['date'], left_filtered, marker='s', linewidth=2, markersize=7, label='Left Foot', color='#3498db')
 
-            if 'right_kicking_power_mph' in df.columns:
+            if 'right_kicking_power_mph' in df_analytics.columns:
                 right_filtered = right_vals[mask]
                 ax.plot(df_filtered['date'], right_filtered, marker='^', linewidth=2, markersize=7, label='Right Foot', color='#e74c3c')
 
@@ -1196,8 +1217,8 @@ with tab3:
             plt.xticks(rotation=45)
 
     elif chart_option == "Agility Performance":
-        if 'intense_turns' in df.columns and 'date' in df.columns:
-            agility_data = df[['date', 'intense_turns']].dropna()
+        if 'intense_turns' in df_analytics.columns and 'date' in df_analytics.columns:
+            agility_data = df_analytics[['date', 'intense_turns']].dropna()
             ax.plot(agility_data['date'], agility_data['intense_turns'], marker='D', linewidth=2, markersize=8, color='purple')
             ax.axhline(y=10, color='r', linestyle='--', label='Elite Target (10+)')
             ax.set_xlabel('Date', fontsize=12)
@@ -1208,12 +1229,12 @@ with tab3:
             plt.xticks(rotation=45)
 
     elif chart_option == "Turn Speed Analysis":
-        if 'avg_turn_entry' in df.columns and 'avg_turn_exit' in df.columns:
-            entry_data = pd.to_numeric(df['avg_turn_entry'], errors='coerce')
-            exit_data = pd.to_numeric(df['avg_turn_exit'], errors='coerce')
+        if 'avg_turn_entry' in df_analytics.columns and 'avg_turn_exit' in df_analytics.columns:
+            entry_data = pd.to_numeric(df_analytics['avg_turn_entry'], errors='coerce')
+            exit_data = pd.to_numeric(df_analytics['avg_turn_exit'], errors='coerce')
 
             mask = entry_data.notna() | exit_data.notna()
-            df_filtered = df[mask].copy()
+            df_filtered = df_analytics[mask].copy()
 
             ax.plot(df_filtered['date'], entry_data[mask], marker='o', linewidth=2, markersize=7, label='Entry Speed', color='#3498db')
             ax.plot(df_filtered['date'], exit_data[mask], marker='s', linewidth=2, markersize=7, label='Exit Speed', color='#e74c3c')
@@ -1234,6 +1255,25 @@ with tab4:
 
     st.info("**What is Speed?**\n\nSpeed measures explosive power, acceleration, and top-end velocity in training sessions.")
 
+    df_speed = df.copy()
+
+    # Coach filter
+    if 'coach' in df_speed.columns:
+        coaches = df_speed['coach'].dropna().unique().tolist()
+        # Replace "Solo" with "No Coach" in the display
+        coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+        coaches_display_map = dict(zip(coaches_display, coaches))
+
+        selected_coach_display = st.selectbox(
+            "Filter by Coach",
+            ["All Coaches"] + coaches_display,
+            key="speed_coach_filter"
+        )
+
+        if selected_coach_display != "All Coaches":
+            selected_coach = coaches_display_map[selected_coach_display]
+            df_speed = df_speed[df_speed['coach'] == selected_coach]
+
     # Time filter with date range display
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -1244,8 +1284,7 @@ with tab4:
             key="speed_time_filter"
         )
 
-    # Filter data based on selection and show date range
-    df_speed = df.copy()
+    # Filter data based on selection and show date range (update total_sessions after coach filter)
     total_sessions = len(df_speed)
     if speed_time_filter == "Last 30 Days" and 'date' in df_speed.columns:
         df_speed['date'] = pd.to_datetime(df_speed['date'], errors='coerce')
@@ -1301,6 +1340,25 @@ with tab5:
 
     st.info("**What is Agility?**\n\nAgility is the ability to respond to game actions fast through quick turns or changes in pace.")
 
+    df_agility = df.copy()
+
+    # Coach filter
+    if 'coach' in df_agility.columns:
+        coaches = df_agility['coach'].dropna().unique().tolist()
+        # Replace "Solo" with "No Coach" in the display
+        coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+        coaches_display_map = dict(zip(coaches_display, coaches))
+
+        selected_coach_display = st.selectbox(
+            "Filter by Coach",
+            ["All Coaches"] + coaches_display,
+            key="agility_coach_filter"
+        )
+
+        if selected_coach_display != "All Coaches":
+            selected_coach = coaches_display_map[selected_coach_display]
+            df_agility = df_agility[df_agility['coach'] == selected_coach]
+
     # Time filter with date range display
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -1312,7 +1370,6 @@ with tab5:
         )
 
     # Filter data based on selection and show date range
-    df_agility = df.copy()
     total_sessions = len(df_agility)
     if agility_time_filter == "Last 30 Days" and 'date' in df_agility.columns:
         df_agility['date'] = pd.to_datetime(df_agility['date'], errors='coerce')
@@ -1369,6 +1426,25 @@ with tab6:
 
     st.info("**What is Ball Work?**\n\nBall work measures technical skill development through foot touches, two-footed ability, and kicking power.")
 
+    df_ball = df.copy()
+
+    # Coach filter
+    if 'coach' in df_ball.columns:
+        coaches = df_ball['coach'].dropna().unique().tolist()
+        # Replace "Solo" with "No Coach" in the display
+        coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+        coaches_display_map = dict(zip(coaches_display, coaches))
+
+        selected_coach_display = st.selectbox(
+            "Filter by Coach",
+            ["All Coaches"] + coaches_display,
+            key="ball_coach_filter"
+        )
+
+        if selected_coach_display != "All Coaches":
+            selected_coach = coaches_display_map[selected_coach_display]
+            df_ball = df_ball[df_ball['coach'] == selected_coach]
+
     # Time filter with date range display
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -1380,7 +1456,6 @@ with tab6:
         )
 
     # Filter data based on selection and show date range
-    df_ball = df.copy()
     total_sessions = len(df_ball)
     if ball_time_filter == "Last 30 Days" and 'date' in df_ball.columns:
         df_ball['date'] = pd.to_datetime(df_ball['date'], errors='coerce')
