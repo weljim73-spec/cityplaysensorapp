@@ -244,6 +244,16 @@ if 'pr_dates' not in st.session_state:
     st.session_state.pr_dates = {}
 if 'uploaded_images' not in st.session_state:
     st.session_state.uploaded_images = []
+if 'initial_load_done' not in st.session_state:
+    st.session_state.initial_load_done = False
+
+# Auto-load data from Google Sheets on app startup
+if not st.session_state.initial_load_done and GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+    df, error = load_data_from_google_sheets()
+    if not error and df is not None:
+        st.session_state.df = df
+        calculate_personal_records()
+    st.session_state.initial_load_done = True
 
 # Column mapping for Excel data
 COLUMN_MAPPING = {
@@ -1250,6 +1260,23 @@ with st.sidebar:
             st.info("💡 Data will auto-load from Google Sheets")
         else:
             st.info("💡 Upload an Excel file or configure Google Sheets")
+
+# Refresh Data button (visible in main area)
+if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+    col_refresh1, col_refresh2, col_refresh3 = st.columns([1, 1, 1])
+    with col_refresh2:
+        if st.button("🔄 Refresh Data", type="primary", use_container_width=True):
+            with st.spinner("Refreshing data from Google Sheets..."):
+                df, error = load_data_from_google_sheets()
+                if error:
+                    st.error(f"❌ Failed to refresh: {error}")
+                else:
+                    st.session_state.df = df
+                    calculate_personal_records()
+                    st.success("✅ Data refreshed!")
+                    st.rerun()
+
+st.markdown("---")
 
 # Main tabs
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
