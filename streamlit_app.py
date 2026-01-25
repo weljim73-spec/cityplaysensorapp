@@ -131,18 +131,13 @@ def load_data_from_google_sheets():
             'sprint_distance_yd': 'sprint_distance',
             'total_distance_mi': 'total_distance',
             'duration_min': 'duration',
-            'kicking_power_mph': 'kicking_power',
-            'left_foot_pct': 'left_pct',
+            'kicking_power_mph': 'kicking_power_mph',
             'avg_turn_entry_speed_mph': 'avg_turn_entry',
             'avg_turn_exit_speed_mph': 'avg_turn_exit',
             'sprints': 'num_sprints',
             'accl_decl': 'accelerations',
         }
         df.rename(columns=column_mapping, inplace=True)
-
-        # Calculate right_pct if missing (in case only left_pct is in sheet)
-        if 'left_pct' in df.columns and 'right_pct' not in df.columns:
-            df['right_pct'] = 100 - pd.to_numeric(df['left_pct'], errors='coerce')
 
         # Convert date column to datetime
         if 'date' in df.columns:
@@ -151,12 +146,13 @@ def load_data_from_google_sheets():
         # Convert numeric columns (using internal mapped names)
         numeric_columns = [
             'duration', 'ball_touches', 'total_distance', 'sprint_distance',
-            'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
-            'left_touches', 'right_touches', 'left_pct', 'right_pct',
+            'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
+            'left_touches', 'right_touches', 'left_foot_pct',
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
-            'avg_turn_entry', 'avg_turn_exit', 'total_turns'
+            'avg_turn_entry', 'avg_turn_exit', 'total_turns',
+            'goals', 'assists', 'ball_possessions'
         ]
 
         for col in numeric_columns:
@@ -251,27 +247,46 @@ if 'uploaded_images' not in st.session_state:
 
 # Column mapping for Excel data
 COLUMN_MAPPING = {
-    'top_speed_mph': 'top_speed',
-    'sprint_distance_yd': 'sprint_distance',
-    'total_distance_mi': 'total_distance',
-    'ball_touches': 'ball_touches',
+    # Session Info
+    'date': 'date',
+    'session_name': 'session_name',
+    'coach': 'coach',
+    'location': 'location',
+    'surface': 'surface',
+    'with_ball': 'with_ball',
+    'training_type': 'training_type',
     'duration_min': 'duration',
-    'kicking_power_mph': 'kicking_power',
-    'left_kicking_power_mph': 'left_kicking_power_mph',
-    'right_kicking_power_mph': 'right_kicking_power_mph',
-    'left_foot_pct': 'left_pct',
-    'right_foot_pct': 'right_pct',
-    'intense_turns': 'intense_turns',
-    'left_touches': 'left_touches',
-    'right_touches': 'right_touches',
+    'intensity': 'intensity',
+    # Movement Metrics
+    'total_distance_mi': 'total_distance',
+    'sprint_distance_yd': 'sprint_distance',
+    'accl_decl': 'accelerations',
+    'top_speed_mph': 'top_speed',
+    'sprints': 'num_sprints',
+    # Agility
     'left_turns': 'left_turns',
-    'right_turns': 'right_turns',
     'back_turns': 'back_turns',
+    'right_turns': 'right_turns',
+    'intense_turns': 'intense_turns',
+    'total_turns': 'total_turns',
     'avg_turn_entry_speed_mph': 'avg_turn_entry',
     'avg_turn_exit_speed_mph': 'avg_turn_exit',
-    'sprints': 'num_sprints',
-    'accl_decl': 'accelerations',
-    'training_type': 'training_type',
+    # Ball Work
+    'ball_touches': 'ball_touches',
+    'left_touches': 'left_touches',
+    'right_touches': 'right_touches',
+    'left_foot_pct': 'left_foot_pct',
+    'left_releases': 'left_releases',
+    'right_releases': 'right_releases',
+    'kicking_power_mph': 'kicking_power_mph',
+    'left_kicking_power_mph': 'left_kicking_power_mph',
+    'right_kicking_power_mph': 'right_kicking_power_mph',
+    # Match Stats
+    'position': 'position',
+    'goals': 'goals',
+    'assists': 'assists',
+    'work_rate': 'work_rate',
+    'ball_possessions': 'ball_possessions',
 }
 
 def load_excel_file(uploaded_file):
@@ -285,9 +300,9 @@ def load_excel_file(uploaded_file):
         # Apply column mapping
         df.rename(columns=COLUMN_MAPPING, inplace=True)
 
-        # Calculate right_pct if missing
-        if 'left_pct' in df.columns and 'right_pct' not in df.columns:
-            df['right_pct'] = 100 - pd.to_numeric(df['left_pct'], errors='coerce')
+        # Convert date column to datetime
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
 
         st.session_state.df = df
         calculate_personal_records()
@@ -1467,71 +1482,126 @@ with tab2:
 
     extracted_data = st.session_state.get('extracted_data', {})
 
+    # Training type selection (outside form to control field visibility)
+    training_types = ["Speed and Agility", "Ball Work", "Match-Grass", "Match-Turf", "Match-Hard"]
+    selected_training_type = st.selectbox(
+        "Select Training Type",
+        training_types,
+        key="training_type_selector"
+    )
+
     with st.form("session_form"):
         col1, col2 = st.columns(2)
 
         with col1:
             st.write("**Session Info**")
             date = st.date_input("Date", value=datetime.now())
+            session_name = st.text_input("Session Name", value=extracted_data.get('session_name', ''))
+            coach = st.text_input("Coach", value=extracted_data.get('coach', ''))
+            location = st.text_input("Location", value=extracted_data.get('location', ''))
+            surface = st.text_input("Surface", value=extracted_data.get('surface', ''))
+            with_ball = st.selectbox("With Ball", ["Yes", "No"], index=0)
             duration = st.number_input("Duration (min)", value=int(extracted_data.get('duration', 0)) if extracted_data.get('duration') else 0)
-            training_type = st.text_input("Training Type", value=extracted_data.get('training_type', ''))
             intensity = st.text_input("Intensity", value=extracted_data.get('intensity', ''))
 
-            st.write("**Movement Metrics**")
+            st.write("**Movement Metrics (All Types)**")
             total_distance = st.number_input("Total Distance (mi)", value=float(extracted_data.get('total_distance', 0)) if extracted_data.get('total_distance') else 0.0, format="%.2f")
             sprint_distance = st.number_input("Sprint Distance (yd)", value=float(extracted_data.get('sprint_distance', 0)) if extracted_data.get('sprint_distance') else 0.0, format="%.1f")
             top_speed = st.number_input("Top Speed (mph)", value=float(extracted_data.get('top_speed', 0)) if extracted_data.get('top_speed') else 0.0, format="%.2f")
             num_sprints = st.number_input("Number of Sprints", value=int(extracted_data.get('num_sprints', 0)) if extracted_data.get('num_sprints') else 0)
-            accelerations = st.number_input("Accelerations", value=int(extracted_data.get('accelerations', 0)) if extracted_data.get('accelerations') else 0)
+            accelerations = st.number_input("Accl/Decl", value=int(extracted_data.get('accelerations', 0)) if extracted_data.get('accelerations') else 0)
 
-        with col2:
-            st.write("**Ball Work**")
-            ball_touches = st.number_input("Ball Touches", value=int(extracted_data.get('ball_touches', 0)) if extracted_data.get('ball_touches') else 0)
-            left_touches = st.number_input("Left Foot Touches", value=int(extracted_data.get('left_touches', 0)) if extracted_data.get('left_touches') else 0)
-            right_touches = st.number_input("Right Foot Touches", value=int(extracted_data.get('right_touches', 0)) if extracted_data.get('right_touches') else 0)
-            left_kicking_power = st.number_input("Left Kicking Power (mph)", value=float(extracted_data.get('left_kicking_power_mph', 0)) if extracted_data.get('left_kicking_power_mph') else 0.0, format="%.2f")
-            right_kicking_power = st.number_input("Right Kicking Power (mph)", value=float(extracted_data.get('right_kicking_power_mph', 0)) if extracted_data.get('right_kicking_power_mph') else 0.0, format="%.2f")
-
-            st.write("**Agility**")
+            st.write("**Agility (All Types)**")
             left_turns = st.number_input("Left Turns", value=int(extracted_data.get('left_turns', 0)) if extracted_data.get('left_turns') else 0)
             right_turns = st.number_input("Right Turns", value=int(extracted_data.get('right_turns', 0)) if extracted_data.get('right_turns') else 0)
             back_turns = st.number_input("Back Turns", value=int(extracted_data.get('back_turns', 0)) if extracted_data.get('back_turns') else 0)
             intense_turns = st.number_input("Intense Turns", value=int(extracted_data.get('intense_turns', 0)) if extracted_data.get('intense_turns') else 0)
+            total_turns = st.number_input("Total Turns", value=int(extracted_data.get('total_turns', 0)) if extracted_data.get('total_turns') else 0)
             avg_turn_entry = st.number_input("Avg Turn Entry Speed (mph)", value=float(extracted_data.get('avg_turn_entry', 0)) if extracted_data.get('avg_turn_entry') else 0.0, format="%.1f")
             avg_turn_exit = st.number_input("Avg Turn Exit Speed (mph)", value=float(extracted_data.get('avg_turn_exit', 0)) if extracted_data.get('avg_turn_exit') else 0.0, format="%.1f")
+
+        with col2:
+            # Ball Work fields - shown for Ball Work and Match types
+            if selected_training_type in ["Ball Work", "Match-Grass", "Match-Turf", "Match-Hard"]:
+                st.write("**Ball Work**")
+                ball_touches = st.number_input("Ball Touches", value=int(extracted_data.get('ball_touches', 0)) if extracted_data.get('ball_touches') else 0)
+                left_touches = st.number_input("Left Foot Touches", value=int(extracted_data.get('left_touches', 0)) if extracted_data.get('left_touches') else 0)
+                right_touches = st.number_input("Right Foot Touches", value=int(extracted_data.get('right_touches', 0)) if extracted_data.get('right_touches') else 0)
+                left_foot_pct = st.number_input("Left Foot %", value=float(extracted_data.get('left_foot_pct', 0)) if extracted_data.get('left_foot_pct') else 0.0, format="%.1f")
+                left_releases = st.number_input("Left Releases", value=int(extracted_data.get('left_releases', 0)) if extracted_data.get('left_releases') else 0)
+                right_releases = st.number_input("Right Releases", value=int(extracted_data.get('right_releases', 0)) if extracted_data.get('right_releases') else 0)
+                kicking_power = st.number_input("Kicking Power (mph)", value=float(extracted_data.get('kicking_power_mph', 0)) if extracted_data.get('kicking_power_mph') else 0.0, format="%.2f")
+                left_kicking_power = st.number_input("Left Kicking Power (mph)", value=float(extracted_data.get('left_kicking_power_mph', 0)) if extracted_data.get('left_kicking_power_mph') else 0.0, format="%.2f")
+                right_kicking_power = st.number_input("Right Kicking Power (mph)", value=float(extracted_data.get('right_kicking_power_mph', 0)) if extracted_data.get('right_kicking_power_mph') else 0.0, format="%.2f")
+            else:
+                # Set defaults for Speed and Agility
+                ball_touches = 0
+                left_touches = 0
+                right_touches = 0
+                left_foot_pct = 0
+                left_releases = 0
+                right_releases = 0
+                kicking_power = 0
+                left_kicking_power = 0
+                right_kicking_power = 0
+
+            # Match-specific fields - shown only for Match types
+            if selected_training_type in ["Match-Grass", "Match-Turf", "Match-Hard"]:
+                st.write("**Match Stats**")
+                position = st.text_input("Position", value=extracted_data.get('position', ''))
+                goals = st.number_input("Goals", value=int(extracted_data.get('goals', 0)) if extracted_data.get('goals') else 0)
+                assists = st.number_input("Assists", value=int(extracted_data.get('assists', 0)) if extracted_data.get('assists') else 0)
+                work_rate = st.text_input("Work Rate", value=extracted_data.get('work_rate', ''))
+                ball_possessions = st.number_input("Ball Possessions", value=int(extracted_data.get('ball_possessions', 0)) if extracted_data.get('ball_possessions') else 0)
+            else:
+                # Set defaults for non-match types
+                position = ''
+                goals = 0
+                assists = 0
+                work_rate = ''
+                ball_possessions = 0
 
         submitted = st.form_submit_button("💾 Add to Excel")
 
         if submitted:
-            # Create new row
+            # Create new row with all fields
             new_row = {
                 'date': date,
+                'session_name': session_name,
+                'coach': coach,
+                'location': location,
+                'surface': surface,
+                'with_ball': with_ball,
+                'training_type': selected_training_type,
                 'duration': duration,
-                'training_type': training_type,
                 'intensity': intensity,
                 'total_distance': total_distance,
                 'sprint_distance': sprint_distance,
+                'accelerations': accelerations,
                 'top_speed': top_speed,
                 'num_sprints': num_sprints,
-                'accelerations': accelerations,
+                'left_turns': left_turns,
+                'back_turns': back_turns,
+                'right_turns': right_turns,
+                'intense_turns': intense_turns,
+                'total_turns': total_turns,
+                'avg_turn_entry': avg_turn_entry,
+                'avg_turn_exit': avg_turn_exit,
                 'ball_touches': ball_touches,
                 'left_touches': left_touches,
                 'right_touches': right_touches,
+                'left_foot_pct': left_foot_pct,
+                'left_releases': left_releases,
+                'right_releases': right_releases,
+                'kicking_power_mph': kicking_power,
                 'left_kicking_power_mph': left_kicking_power,
                 'right_kicking_power_mph': right_kicking_power,
-                'left_turns': left_turns,
-                'right_turns': right_turns,
-                'back_turns': back_turns,
-                'intense_turns': intense_turns,
-                'avg_turn_entry': avg_turn_entry,
-                'avg_turn_exit': avg_turn_exit,
+                'position': position,
+                'goals': goals,
+                'assists': assists,
+                'work_rate': work_rate,
+                'ball_possessions': ball_possessions,
             }
-
-            # Calculate percentages
-            if left_touches > 0 or right_touches > 0:
-                total_touches = left_touches + right_touches
-                new_row['left_pct'] = (left_touches / total_touches * 100) if total_touches > 0 else 0
-                new_row['right_pct'] = (right_touches / total_touches * 100) if total_touches > 0 else 0
 
             # Add to dataframe
             if st.session_state.df is None:
