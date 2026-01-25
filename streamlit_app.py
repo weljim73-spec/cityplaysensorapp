@@ -5,12 +5,22 @@ Accessible from any browser including mobile devices
 """
 
 import streamlit as st
+
+# Page configuration - MUST be first Streamlit command
+st.set_page_config(
+    page_title="Mia Training Tracker",
+    page_icon="⚽",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from PIL import Image
 import io
 import re
+import os
 
 # Import matplotlib with proper backend for Streamlit
 import matplotlib
@@ -21,7 +31,6 @@ import seaborn as sns
 # Try to import pytesseract and configure for Streamlit Cloud
 try:
     import pytesseract
-    import os
 
     # Configure Tesseract path for different environments
     # Streamlit Cloud uses /usr/bin/tesseract
@@ -34,20 +43,13 @@ try:
     try:
         pytesseract.get_tesseract_version()
         OCR_AVAILABLE = True
+        OCR_ERROR = None
     except Exception as e:
         OCR_AVAILABLE = False
-        st.warning(f"⚠️ OCR not available: Tesseract not found. Manual data entry only.")
+        OCR_ERROR = "Tesseract not found"
 except ImportError:
     OCR_AVAILABLE = False
-    st.warning("⚠️ OCR not available: pytesseract module not installed. Manual data entry only.")
-
-# Page configuration
-st.set_page_config(
-    page_title="Mia Training Tracker",
-    page_icon="⚽",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+    OCR_ERROR = "pytesseract module not installed"
 
 # Custom CSS for mobile responsiveness
 st.markdown("""
@@ -302,6 +304,10 @@ def parse_ocr_text(text):
 
 # Main App Header
 st.markdown('<div class="main-header">⚽ Mia Training Tracker</div>', unsafe_allow_html=True)
+
+# Display OCR warning if not available
+if not OCR_AVAILABLE:
+    st.warning(f"⚠️ OCR not available: {OCR_ERROR}. Manual data entry only.")
 
 # Sidebar for Excel file upload
 with st.sidebar:
