@@ -814,8 +814,13 @@ with tab1:
         mime="text/plain"
     )
 
-    # Display the report
-    st.code(insights_report, language=None)
+    # Display the report with word wrap
+    st.text_area(
+        label="AI Insights Report",
+        value=insights_report,
+        height=600,
+        label_visibility="collapsed"
+    )
 
 # Tab 2: Analytics - EXACT copy from main app
 with tab2:

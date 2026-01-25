@@ -1539,8 +1539,13 @@ with tab6:
                 mime="text/plain"
             )
 
-            # Display the report in a code block for proper formatting
-            st.code(st.session_state.ai_insights_report, language=None)
+            # Display the report with word wrap
+            st.text_area(
+                label="AI Insights Report",
+                value=st.session_state.ai_insights_report,
+                height=600,
+                label_visibility="collapsed"
+            )
 
             # Add option to clear/regenerate
             if st.button("🔄 Clear Report"):
