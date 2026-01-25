@@ -1657,8 +1657,8 @@ with tab2:
             kicking_power = max(left_kicking_power, right_kicking_power)
 
             # Work Rate = (Total Distance in miles × 1760 yards/mile) / Duration in minutes
-            # Result is in yards per minute
-            work_rate = ((total_distance * 1760) / duration) if duration > 0 else 0
+            # Result is in yards per minute, rounded to 2 decimal places
+            work_rate = round(((total_distance * 1760) / duration), 2) if duration > 0 else 0
 
             # Store submission data for confirmation
             new_row = {
@@ -2265,7 +2265,7 @@ with tab7:
                     ('position', 'Position', '📍 Most played position'),
                     ('goals', 'Goals', '⚽ Goals scored'),
                     ('assists', 'Assists', '🎯 Assists made'),
-                    ('work_rate', 'Work Rate', '💪 Effort level'),
+                    ('work_rate', 'Work Rate (yd/min)', '💪 Effort level'),
                     ('ball_possessions', 'Ball Possessions', '🏃 Time on ball'),
                 ]
 

@@ -1643,7 +1643,7 @@ with tab7:
                 ('position', 'Position', '📍 Most played position'),
                 ('goals', 'Goals', '⚽ Goals scored'),
                 ('assists', 'Assists', '🎯 Assists made'),
-                ('work_rate', 'Work Rate', '💪 Effort level'),
+                ('work_rate', 'Work Rate (yd/min)', '💪 Effort level'),
                 ('ball_possessions', 'Ball Possessions', '🏃 Time on ball'),
             ]
 
