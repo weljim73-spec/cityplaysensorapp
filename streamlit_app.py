@@ -121,17 +121,42 @@ def load_data_from_google_sheets():
         # Create DataFrame
         df = pd.DataFrame(rows, columns=headers)
 
+        # Normalize column names to lowercase with underscores for consistency
+        df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+
+        # Apply the same column mapping as Excel load (for internal consistency)
+        # This maps your Google Sheet column names to the internal names the app uses
+        column_mapping = {
+            'top_speed_mph': 'top_speed',
+            'sprint_distance_yd': 'sprint_distance',
+            'total_distance_mi': 'total_distance',
+            'duration_min': 'duration',
+            'kicking_power_mph': 'kicking_power',
+            'left_foot_pct': 'left_pct',
+            'avg_turn_entry_speed_mph': 'avg_turn_entry',
+            'avg_turn_exit_speed_mph': 'avg_turn_exit',
+            'sprints': 'num_sprints',
+            'accl_decl': 'accelerations',
+        }
+        df.rename(columns=column_mapping, inplace=True)
+
+        # Calculate right_pct if missing (in case only left_pct is in sheet)
+        if 'left_pct' in df.columns and 'right_pct' not in df.columns:
+            df['right_pct'] = 100 - pd.to_numeric(df['left_pct'], errors='coerce')
+
         # Convert date column to datetime
         if 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
 
-        # Convert numeric columns
+        # Convert numeric columns (using internal mapped names)
         numeric_columns = [
-            'top_speed', 'sprint_distance', 'total_distance', 'ball_touches',
-            'duration', 'kicking_power', 'left_kicking_power_mph', 'right_kicking_power_mph',
-            'left_pct', 'right_pct', 'intense_turns', 'left_touches', 'right_touches',
-            'left_turns', 'right_turns', 'back_turns', 'avg_turn_entry', 'avg_turn_exit',
-            'num_sprints', 'accelerations'
+            'duration', 'ball_touches', 'total_distance', 'sprint_distance',
+            'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
+            'left_touches', 'right_touches', 'left_pct', 'right_pct',
+            'left_releases', 'right_releases',
+            'left_kicking_power_mph', 'right_kicking_power_mph',
+            'left_turns', 'back_turns', 'right_turns', 'intense_turns',
+            'avg_turn_entry', 'avg_turn_exit', 'total_turns'
         ]
 
         for col in numeric_columns:
