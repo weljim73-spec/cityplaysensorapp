@@ -1065,15 +1065,15 @@ def analyze_training_data(df):
                     insights += f"    Avg Duration: With Ball {ball_duration:.0f} min | Without Ball {no_ball_duration:.0f} min\n"
 
     # Session type analysis
-    if 'session_name' in df.columns:
-        session_dist = df['session_name'].value_counts()
-        insights += f"\n  Session Types:\n"
-        top_sessions = session_dist.head(5)
-        for session, count in top_sessions.items():
-            insights += f"    • {session}: {count} sessions\n"
+    if 'training_type' in df.columns:
+        training_dist = df['training_type'].value_counts()
+        insights += f"\n  Training Types:\n"
+        top_trainings = training_dist.head(5)
+        for training, count in top_trainings.items():
+            insights += f"    • {training}: {count} sessions\n"
 
-        if len(session_dist) > 5:
-            insights += f"    • ({len(session_dist) - 5} other session types)\n"
+        if len(training_dist) > 5:
+            insights += f"    • ({len(training_dist) - 5} other training types)\n"
 
     # 11. Actionable Recommendations
     insights += "\n💡 PERSONALIZED ACTION PLAN\n" + "-" * 80 + "\n"
