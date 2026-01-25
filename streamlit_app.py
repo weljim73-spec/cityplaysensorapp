@@ -1543,7 +1543,8 @@ with tab2:
             surface = st.selectbox("Surface", ["Grass", "Turf", "Hard"])
 
             # Auto-set With Ball based on training type
-            with_ball = "Yes" if selected_training_type == "Ball Work" else "No"
+            # "Yes" for Ball Work and any Match types (Match-Grass, Match-Turf, Match-Hard)
+            with_ball = "Yes" if (selected_training_type == "Ball Work" or "Match" in selected_training_type) else "No"
 
             duration = st.number_input("Duration (min)", value=int(extracted_data.get('duration', 0)) if extracted_data.get('duration') else 0)
 
