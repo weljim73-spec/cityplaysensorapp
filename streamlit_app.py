@@ -1496,13 +1496,52 @@ with tab2:
         with col1:
             st.write("**Session Info**")
             date = st.date_input("Date", value=datetime.now())
-            session_name = st.text_input("Session Name", value=extracted_data.get('session_name', ''))
-            coach = st.text_input("Coach", value=extracted_data.get('coach', ''))
-            location = st.text_input("Location", value=extracted_data.get('location', ''))
-            surface = st.text_input("Surface", value=extracted_data.get('surface', ''))
-            with_ball = st.selectbox("With Ball", ["Yes", "No"], index=0)
+
+            # Session Name - dropdown with existing values + custom entry
+            existing_sessions = []
+            if st.session_state.df is not None and 'session_name' in st.session_state.df.columns:
+                existing_sessions = st.session_state.df['session_name'].dropna().unique().tolist()
+            session_options = ["-- Enter New --"] + sorted(existing_sessions)
+            session_choice = st.selectbox("Session Name", session_options)
+            if session_choice == "-- Enter New --":
+                session_name = st.text_input("Enter Session Name", value=extracted_data.get('session_name', ''))
+            else:
+                session_name = session_choice
+
+            # Coach - dropdown with existing values + custom entry
+            existing_coaches = []
+            if st.session_state.df is not None and 'coach' in st.session_state.df.columns:
+                existing_coaches = st.session_state.df['coach'].dropna().unique().tolist()
+            coach_options = ["-- Enter New --"] + sorted(existing_coaches)
+            coach_choice = st.selectbox("Coach", coach_options)
+            if coach_choice == "-- Enter New --":
+                coach = st.text_input("Enter Coach Name", value=extracted_data.get('coach', ''))
+            else:
+                coach = coach_choice
+
+            # Location - dropdown with existing values + custom entry
+            existing_locations = []
+            if st.session_state.df is not None and 'location' in st.session_state.df.columns:
+                existing_locations = st.session_state.df['location'].dropna().unique().tolist()
+            location_options = ["-- Enter New --"] + sorted(existing_locations)
+            location_choice = st.selectbox("Location", location_options)
+            if location_choice == "-- Enter New --":
+                location = st.text_input("Enter Location", value=extracted_data.get('location', ''))
+            else:
+                location = location_choice
+
+            # Surface - fixed dropdown
+            surface = st.selectbox("Surface", ["Grass", "Turf", "Hard"])
+
+            # Auto-set With Ball based on training type
+            with_ball = "Yes" if selected_training_type == "Ball Work" else "No"
+
             duration = st.number_input("Duration (min)", value=int(extracted_data.get('duration', 0)) if extracted_data.get('duration') else 0)
-            intensity = st.text_input("Intensity", value=extracted_data.get('intensity', ''))
+
+            # Intensity - fixed dropdown with 10 levels
+            intensity_options = ["Minimal", "Extremely Easy", "Very Easy", "Easy", "Moderate",
+                               "Somewhat Hard", "Hard", "Very Hard", "Extremely Hard", "Maximal"]
+            intensity = st.selectbox("Intensity", intensity_options)
 
             st.write("**Movement Metrics (All Types)**")
             total_distance = st.number_input("Total Distance (mi)", value=float(extracted_data.get('total_distance', 0)) if extracted_data.get('total_distance') else 0.0, format="%.2f")
