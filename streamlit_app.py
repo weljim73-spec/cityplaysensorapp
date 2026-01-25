@@ -1171,87 +1171,18 @@ st.markdown('<div class="main-header">⚽ Mia Training Tracker</div>', unsafe_al
 if not OCR_AVAILABLE:
     st.warning(f"⚠️ OCR not available: {OCR_ERROR}. Manual data entry only.")
 
-# Sidebar for Data Management
-with st.sidebar:
-    st.header("📁 Data Management")
+# Auto-load data from Google Sheets on app start
+if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+    if 'auto_loaded' not in st.session_state:
+        st.session_state.auto_loaded = False
 
-    # Google Sheets Integration Section
-    if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
-        st.subheader("☁️ Cloud Storage")
-
-        # Auto-load on app start
-        if 'auto_loaded' not in st.session_state:
-            st.session_state.auto_loaded = False
-
-        if not st.session_state.auto_loaded:
-            with st.spinner("Loading data from Google Sheets..."):
-                df, error = load_data_from_google_sheets()
-                if error:
-                    st.warning(f"⚠️ {error}")
-                else:
-                    st.session_state.df = df
-                    st.session_state.auto_loaded = True
-                    calculate_personal_records()
-
-        # Manual sync buttons
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 Sync from Cloud", use_container_width=True):
-                with st.spinner("Syncing..."):
-                    df, error = load_data_from_google_sheets()
-                    if error:
-                        st.error(f"❌ {error}")
-                    else:
-                        st.session_state.df = df
-                        calculate_personal_records()
-                        st.success("✅ Synced!")
-                        st.rerun()
-
-        with col2:
-            if st.button("💾 Save to Cloud", use_container_width=True, disabled=(st.session_state.df is None)):
-                if st.session_state.df is not None:
-                    with st.spinner("Saving..."):
-                        success, error = save_data_to_google_sheets(st.session_state.df)
-                        if error:
-                            st.error(f"❌ {error}")
-                        else:
-                            st.success("✅ Saved!")
-
-        st.markdown("---")
-
-    # Excel file upload (alternative/backup method)
-    st.subheader("📂 Local File Upload")
-
-    uploaded_excel = st.file_uploader("Upload Training Data Excel", type=['xlsx'], key='excel_upload')
-
-    if uploaded_excel is not None:
-        if st.button("Load Excel File"):
-            success, message = load_excel_file(uploaded_excel)
-            if success:
-                st.success(message)
-            else:
-                st.error(message)
-
-    # Data status
-    if st.session_state.df is not None:
-        st.success(f"✅ {len(st.session_state.df)} sessions loaded")
-
-        # Download current data
-        if st.button("📥 Download Excel"):
-            buffer = io.BytesIO()
-            st.session_state.df.to_excel(buffer, index=False)
-            buffer.seek(0)
-            st.download_button(
-                label="Download Training Data",
-                data=buffer,
-                file_name=f"Mia_Training_Data_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-    else:
-        if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
-            st.info("💡 Data will auto-load from Google Sheets")
-        else:
-            st.info("💡 Upload an Excel file or configure Google Sheets")
+    if not st.session_state.auto_loaded:
+        with st.spinner("Loading data from Google Sheets..."):
+            df, error = load_data_from_google_sheets()
+            if not error and df is not None:
+                st.session_state.df = df
+                st.session_state.auto_loaded = True
+                calculate_personal_records()
 
 # Refresh Data button (visible in main area)
 if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
