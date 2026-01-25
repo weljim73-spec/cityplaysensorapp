@@ -2282,13 +2282,12 @@ with tab7:
                                         st.metric(label, most_common[0])
                                         st.caption(description)
                             elif col_name == 'work_rate':
-                                # For work rate, show most common
-                                values = df[col_name].dropna()
+                                # For work rate, show average (numeric field)
+                                values = pd.to_numeric(df[col_name], errors='coerce').dropna()
                                 if len(values) > 0:
-                                    most_common = values.mode()
-                                    if len(most_common) > 0:
-                                        st.metric(label, most_common[0])
-                                        st.caption(description)
+                                    avg_val = values.mean()
+                                    st.metric(label, f"{avg_val:.2f}")
+                                    st.caption(description)
                             else:
                                 # For numeric fields, show total and average
                                 values = pd.to_numeric(df[col_name], errors='coerce').dropna()
