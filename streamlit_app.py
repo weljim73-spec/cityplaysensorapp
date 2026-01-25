@@ -1508,6 +1508,10 @@ with tab2:
     if 'form_counter' not in st.session_state:
         st.session_state['form_counter'] = 0
 
+    # Initialize confirmation state
+    if 'pending_submission' not in st.session_state:
+        st.session_state['pending_submission'] = None
+
     extracted_data = st.session_state.get('extracted_data', {})
 
     # Training type selection (outside form to control field visibility)
@@ -1598,7 +1602,7 @@ with tab2:
                 # Left Foot % - calculated field (removed from user input)
                 left_releases = st.number_input("Left Releases", value=int(extracted_data.get('left_releases', 0)) if extracted_data.get('left_releases') else 0)
                 right_releases = st.number_input("Right Releases", value=int(extracted_data.get('right_releases', 0)) if extracted_data.get('right_releases') else 0)
-                kicking_power = st.number_input("Kicking Power (mph)", value=float(extracted_data.get('kicking_power_mph', 0)) if extracted_data.get('kicking_power_mph') else 0.0, format="%.2f")
+                # Kicking Power - calculated field (removed from user input)
                 left_kicking_power = st.number_input("Left Kicking Power (mph)", value=float(extracted_data.get('left_kicking_power_mph', 0)) if extracted_data.get('left_kicking_power_mph') else 0.0, format="%.2f")
                 right_kicking_power = st.number_input("Right Kicking Power (mph)", value=float(extracted_data.get('right_kicking_power_mph', 0)) if extracted_data.get('right_kicking_power_mph') else 0.0, format="%.2f")
             else:
@@ -1607,7 +1611,6 @@ with tab2:
                 right_touches = 0
                 left_releases = 0
                 right_releases = 0
-                kicking_power = 0
                 left_kicking_power = 0
                 right_kicking_power = 0
 
@@ -1636,6 +1639,7 @@ with tab2:
             # Clear extracted data and increment form counter to reset form
             st.session_state['extracted_data'] = {}
             st.session_state['form_counter'] += 1
+            st.session_state['pending_submission'] = None
             st.rerun()
 
         if submitted:
@@ -1649,10 +1653,14 @@ with tab2:
             # Left Foot % = Left Foot Touches / Ball Touches (if Ball Touches > 0)
             left_foot_pct = (left_touches / ball_touches * 100) if ball_touches > 0 else 0
 
-            # Work Rate = Total Distance / Duration (if Duration > 0)
-            work_rate = (total_distance / duration) if duration > 0 else 0
+            # Kicking Power = Max of Left Kicking Power or Right Kicking Power
+            kicking_power = max(left_kicking_power, right_kicking_power)
 
-            # Create new row with all fields
+            # Work Rate = (Total Distance in miles × 1760 yards/mile) / Duration in minutes
+            # Result is in yards per minute
+            work_rate = ((total_distance * 1760) / duration) if duration > 0 else 0
+
+            # Store submission data for confirmation
             new_row = {
                 'date': date,
                 'session_name': session_name,
@@ -1691,29 +1699,48 @@ with tab2:
                 'ball_possessions': ball_possessions,
             }
 
-            # Add to dataframe
-            if st.session_state.df is None:
-                st.session_state.df = pd.DataFrame([new_row])
-            else:
-                st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_row])], ignore_index=True)
+            # Store the row for confirmation
+            st.session_state['pending_submission'] = new_row
 
-            calculate_personal_records()
+    # Show confirmation dialog if there's a pending submission
+    if st.session_state.get('pending_submission') is not None:
+        st.warning("⚠️ **Confirm you want to update the data file**")
 
-            # Auto-save to Google Sheets if configured
-            if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
-                with st.spinner("Saving to Google Sheets..."):
-                    success, error = save_data_to_google_sheets(st.session_state.df)
-                    if error:
-                        st.warning(f"⚠️ Session added locally but cloud save failed: {error}")
-                        st.info("💡 Use 'Save to Cloud' button in sidebar to sync manually")
-                    else:
-                        st.success("✅ Session added and saved to cloud!")
-            else:
-                st.success("✅ Session added successfully!")
+        col_confirm1, col_confirm2, col_confirm3 = st.columns([1, 1, 2])
 
-            st.session_state['extracted_data'] = {}  # Clear extracted data
-            st.session_state['form_counter'] += 1  # Increment to reset form
-            st.rerun()
+        with col_confirm1:
+            if st.button("✅ Yes", type="primary", use_container_width=True):
+                new_row = st.session_state['pending_submission']
+
+                # Add to dataframe
+                if st.session_state.df is None:
+                    st.session_state.df = pd.DataFrame([new_row])
+                else:
+                    st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_row])], ignore_index=True)
+
+                calculate_personal_records()
+
+                # Auto-save to Google Sheets if configured
+                if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+                    with st.spinner("Saving to Google Sheets..."):
+                        success, error = save_data_to_google_sheets(st.session_state.df)
+                        if error:
+                            st.warning(f"⚠️ Session added locally but cloud save failed: {error}")
+                            st.info("💡 Use 'Save to Cloud' button in sidebar to sync manually")
+                        else:
+                            st.success("✅ Session added and saved to cloud!")
+                else:
+                    st.success("✅ Session added successfully!")
+
+                st.session_state['extracted_data'] = {}  # Clear extracted data
+                st.session_state['form_counter'] += 1  # Increment to reset form
+                st.session_state['pending_submission'] = None  # Clear pending submission
+                st.rerun()
+
+        with col_confirm2:
+            if st.button("❌ No", use_container_width=True):
+                st.session_state['pending_submission'] = None
+                st.rerun()
 
 # Tab 3: Analytics
 with tab3:
