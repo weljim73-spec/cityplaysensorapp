@@ -7,13 +7,17 @@ Accessible from any browser including mobile devices
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
 import pytesseract
 from PIL import Image
 import io
 import re
+
+# Import matplotlib with proper backend for Streamlit
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Page configuration
 st.set_page_config(
