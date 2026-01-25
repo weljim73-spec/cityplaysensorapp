@@ -1092,7 +1092,7 @@ with tab3:
                     avg_val = values.mean()
                     best_val = values.max()
 
-                    st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                    st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                     st.caption(description)
 
 # Tab 4: Agility - EXACT copy from main app
@@ -1160,7 +1160,7 @@ with tab4:
                     avg_val = values.mean()
                     best_val = values.max()
 
-                    st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                    st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                     st.caption(description)
 
 # Tab 5: Ball Work - EXACT copy from main app
@@ -1229,7 +1229,7 @@ with tab5:
                     avg_val = values.mean()
                     best_val = values.max()
 
-                    st.metric(label, f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                    st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                     st.caption(description)
 
     # L/R Ratio
@@ -1243,7 +1243,7 @@ with tab5:
             avg_ratio = ratios.mean()
             best_ratio = ratios.max()
 
-            st.metric("L/R Touch Ratio", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
+            st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
             st.caption("⚖️ Target: ≥ 0.5 for balance")
 
 # Tab 6: Personal Records - EXACT copy from main app
