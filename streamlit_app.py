@@ -1252,13 +1252,14 @@ with st.sidebar:
             st.info("💡 Upload an Excel file or configure Google Sheets")
 
 # Main tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📊 Dashboard",
     "📸 Upload & Extract",
     "📈 Analytics",
     "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
+    "⚽ Match Play",
     "🏆 Personal Records",
     "🤖 AI Insights"
 ])
@@ -2076,8 +2077,163 @@ with tab6:
                 st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
                 st.caption("⚖️ Target: ≥ 0.5 for balance")
 
-# Tab 7: Personal Records
+# Tab 7: Match Play
 with tab7:
+    st.header("⚽ Match Play Analysis")
+
+    if st.session_state.df is None or len(st.session_state.df) == 0:
+        st.warning("📊 No data loaded. Please upload your Excel file in the sidebar.")
+    else:
+        df = st.session_state.df.copy()
+
+        # Filter to only Match training types
+        if 'training_type' in df.columns:
+            match_df = df[df['training_type'].str.contains('Match', na=False, case=False)]
+
+            if len(match_df) == 0:
+                st.info("⚽ No match data found. Match data is recorded when training type contains 'Match' (Match-Grass, Match-Turf, Match-Hard).")
+            else:
+                df = match_df
+
+                st.info("**What is Match Play?**\n\nMatch play tracks performance during actual game situations, including position played, goals, assists, work rate, and ball possessions.")
+
+                # Coach filter
+                if 'coach' in df.columns:
+                    coaches = df['coach'].dropna().unique().tolist()
+                    # Replace "Solo" with "No Coach" in the display
+                    coaches_display = ["No Coach" if str(c).lower() == "solo" else c for c in coaches]
+                    coaches_display_map = dict(zip(coaches_display, coaches))
+
+                    selected_coach_display = st.selectbox(
+                        "Filter by Coach",
+                        ["All Coaches"] + coaches_display,
+                        key="match_coach_filter"
+                    )
+
+                    if selected_coach_display != "All Coaches":
+                        selected_coach = coaches_display_map[selected_coach_display]
+                        df = df[df['coach'] == selected_coach]
+
+                # Time filter with date range display
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    match_time_filter = st.radio(
+                        "Time Period",
+                        ["All Time", "Last 30 Days"],
+                        horizontal=True,
+                        key="match_time_filter"
+                    )
+
+                # Filter data based on selection and show date range
+                total_sessions = len(df)
+                if match_time_filter == "Last 30 Days" and 'date' in df.columns:
+                    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                    cutoff_date = datetime.now() - pd.Timedelta(days=30)
+                    df = df[df['date'] >= cutoff_date]
+
+                    if len(df) > 0 and df['date'].notna().any():
+                        date_min = df['date'].min().strftime('%b %d, %Y')
+                        date_max = df['date'].max().strftime('%b %d, %Y')
+                        with col2:
+                            st.markdown(f"**📅 {date_min} - {date_max}** ({len(df)} of {total_sessions} sessions)")
+                    else:
+                        with col2:
+                            st.markdown(f"**📊 {len(df)} of {total_sessions} sessions**")
+                else:
+                    if 'date' in df.columns:
+                        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                        if df['date'].notna().any():
+                            date_min = df['date'].min().strftime('%b %d, %Y')
+                            date_max = df['date'].max().strftime('%b %d, %Y')
+                            with col2:
+                                st.markdown(f"**📅 {date_min} - {date_max}** ({total_sessions} sessions)")
+                        else:
+                            with col2:
+                                st.markdown(f"**📊 {total_sessions} sessions**")
+                    else:
+                        with col2:
+                            st.markdown(f"**📊 {total_sessions} sessions**")
+
+                # Match-Specific KPIs
+                st.subheader("🎯 Match Performance Indicators")
+
+                match_metrics = [
+                    ('position', 'Position', '📍 Most played position'),
+                    ('goals', 'Goals', '⚽ Goals scored'),
+                    ('assists', 'Assists', '🎯 Assists made'),
+                    ('work_rate', 'Work Rate', '💪 Effort level'),
+                    ('ball_possessions', 'Ball Possessions', '🏃 Time on ball'),
+                ]
+
+                cols = st.columns(5)
+                for idx, (col_name, label, description) in enumerate(match_metrics):
+                    with cols[idx]:
+                        if col_name in df.columns:
+                            if col_name == 'position':
+                                # For position, show most common
+                                values = df[col_name].dropna()
+                                if len(values) > 0:
+                                    most_common = values.mode()
+                                    if len(most_common) > 0:
+                                        st.metric(label, most_common[0])
+                                        st.caption(description)
+                            elif col_name == 'work_rate':
+                                # For work rate, show most common
+                                values = df[col_name].dropna()
+                                if len(values) > 0:
+                                    most_common = values.mode()
+                                    if len(most_common) > 0:
+                                        st.metric(label, most_common[0])
+                                        st.caption(description)
+                            else:
+                                # For numeric fields, show total and average
+                                values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+                                if len(values) > 0:
+                                    total_val = values.sum()
+                                    avg_val = values.mean()
+                                    st.metric(label, f"{total_val:.0f}", delta=f"Avg: {avg_val:.1f}")
+                                    st.caption(description)
+
+                # Additional Performance Metrics
+                st.subheader("📊 Overall Match Performance")
+
+                performance_metrics = [
+                    ('top_speed', 'Top Speed (mph)', '🚀 Maximum velocity'),
+                    ('intense_turns', 'Intense Turns', '🔄 High-speed changes'),
+                    ('ball_touches', 'Ball Touches', '⚽ Total touches'),
+                    ('sprints', 'Sprints', '💨 Sprint count'),
+                    ('sprint_distance', 'Sprint Distance (yd)', '🏃 Sprint yardage'),
+                    ('total_distance', 'Total Distance (mi)', '📏 Ground covered'),
+                    ('left_kicking_power_mph', 'Left Foot Power (mph)', '💪 Left foot striking'),
+                    ('right_kicking_power_mph', 'Right Foot Power (mph)', '💪 Right foot striking'),
+                    ('duration', 'Duration (min)', '⏱️ Match time'),
+                ]
+
+                cols = st.columns(3)
+                for idx, (col_name, label, description) in enumerate(performance_metrics):
+                    with cols[idx % 3]:
+                        if col_name in df.columns:
+                            values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+                            if len(values) > 0:
+                                avg_val = values.mean()
+                                best_val = values.max()
+                                st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
+                                st.caption(description)
+
+                # Match Surface Breakdown
+                if 'surface' in df.columns:
+                    st.subheader("🌱 Surface Breakdown")
+                    surface_counts = df['surface'].value_counts()
+                    cols = st.columns(len(surface_counts))
+                    for idx, (surface, count) in enumerate(surface_counts.items()):
+                        with cols[idx]:
+                            percentage = (count / len(df)) * 100
+                            st.metric(f"{surface}", f"{count}", delta=f"{percentage:.0f}%")
+        else:
+            st.info("⚽ No training type data available. Upload data with match training types to see match analysis.")
+
+# Tab 8: Personal Records
+with tab8:
     st.header("🏆 Personal Records")
 
     if not st.session_state.personal_records:
@@ -2109,8 +2265,8 @@ with tab7:
                 if pr_date:
                     st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 8: AI Insights - Comprehensive Analysis
-with tab8:
+# Tab 9: AI Insights - Comprehensive Analysis
+with tab9:
     st.header("🤖 AI Insights")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
