@@ -51,6 +51,147 @@ except ImportError:
     OCR_AVAILABLE = False
     OCR_ERROR = "pytesseract module not installed"
 
+# Google Sheets Integration
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    GSHEETS_AVAILABLE = True
+except ImportError:
+    GSHEETS_AVAILABLE = False
+
+# Google Sheets functions
+def connect_to_google_sheets():
+    """Connect to Google Sheets using service account credentials from Streamlit secrets"""
+    try:
+        if not GSHEETS_AVAILABLE:
+            return None, "Google Sheets libraries not installed"
+
+        # Get credentials from Streamlit secrets
+        if "gcp_service_account" not in st.secrets:
+            return None, "Google Sheets credentials not configured. See setup guide."
+
+        # Define the required scopes
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+
+        # Create credentials from the secrets
+        credentials = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scopes
+        )
+
+        # Authorize and return the client
+        client = gspread.authorize(credentials)
+        return client, None
+
+    except Exception as e:
+        return None, f"Error connecting to Google Sheets: {str(e)}"
+
+def load_data_from_google_sheets():
+    """Load training data from Google Sheets"""
+    try:
+        # Check if Google Sheets is configured
+        if "google_sheets_url" not in st.secrets:
+            return None, "Google Sheets URL not configured"
+
+        # Connect to Google Sheets
+        client, error = connect_to_google_sheets()
+        if error:
+            return None, error
+
+        # Open the spreadsheet by URL
+        sheet_url = st.secrets["google_sheets_url"]
+        spreadsheet = client.open_by_url(sheet_url)
+
+        # Get the first worksheet (or specify by name)
+        worksheet = spreadsheet.sheet1
+
+        # Get all values and convert to DataFrame
+        data = worksheet.get_all_values()
+
+        if len(data) < 2:
+            return None, "No data found in Google Sheet"
+
+        # First row is headers
+        headers = data[0]
+        rows = data[1:]
+
+        # Create DataFrame
+        df = pd.DataFrame(rows, columns=headers)
+
+        # Convert date column to datetime
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+
+        # Convert numeric columns
+        numeric_columns = [
+            'top_speed', 'sprint_distance', 'total_distance', 'ball_touches',
+            'duration', 'kicking_power', 'left_kicking_power_mph', 'right_kicking_power_mph',
+            'left_pct', 'right_pct', 'intense_turns', 'left_touches', 'right_touches',
+            'left_turns', 'right_turns', 'back_turns', 'avg_turn_entry', 'avg_turn_exit',
+            'num_sprints', 'accelerations'
+        ]
+
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
+        return df, None
+
+    except Exception as e:
+        return None, f"Error loading from Google Sheets: {str(e)}"
+
+def save_data_to_google_sheets(df):
+    """Save training data to Google Sheets"""
+    try:
+        # Connect to Google Sheets
+        client, error = connect_to_google_sheets()
+        if error:
+            return False, error
+
+        # Open the spreadsheet
+        sheet_url = st.secrets["google_sheets_url"]
+        spreadsheet = client.open_by_url(sheet_url)
+        worksheet = spreadsheet.sheet1
+
+        # Clear existing data
+        worksheet.clear()
+
+        # Prepare data for upload
+        # Convert DataFrame to list of lists
+        data = [df.columns.tolist()] + df.astype(str).values.tolist()
+
+        # Update the sheet
+        worksheet.update('A1', data)
+
+        return True, None
+
+    except Exception as e:
+        return False, f"Error saving to Google Sheets: {str(e)}"
+
+def append_row_to_google_sheets(row_data):
+    """Append a single row to Google Sheets"""
+    try:
+        # Connect to Google Sheets
+        client, error = connect_to_google_sheets()
+        if error:
+            return False, error
+
+        # Open the spreadsheet
+        sheet_url = st.secrets["google_sheets_url"]
+        spreadsheet = client.open_by_url(sheet_url)
+        worksheet = spreadsheet.sheet1
+
+        # Append the row
+        worksheet.append_row(row_data)
+
+        return True, None
+
+    except Exception as e:
+        return False, f"Error appending to Google Sheets: {str(e)}"
+
 # Custom CSS for mobile responsiveness
 st.markdown("""
 <style>
@@ -872,9 +1013,56 @@ st.markdown('<div class="main-header">⚽ Mia Training Tracker</div>', unsafe_al
 if not OCR_AVAILABLE:
     st.warning(f"⚠️ OCR not available: {OCR_ERROR}. Manual data entry only.")
 
-# Sidebar for Excel file upload
+# Sidebar for Data Management
 with st.sidebar:
     st.header("📁 Data Management")
+
+    # Google Sheets Integration Section
+    if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+        st.subheader("☁️ Cloud Storage")
+
+        # Auto-load on app start
+        if 'auto_loaded' not in st.session_state:
+            st.session_state.auto_loaded = False
+
+        if not st.session_state.auto_loaded:
+            with st.spinner("Loading data from Google Sheets..."):
+                df, error = load_data_from_google_sheets()
+                if error:
+                    st.warning(f"⚠️ {error}")
+                else:
+                    st.session_state.df = df
+                    st.session_state.auto_loaded = True
+                    calculate_personal_records()
+
+        # Manual sync buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Sync from Cloud", use_container_width=True):
+                with st.spinner("Syncing..."):
+                    df, error = load_data_from_google_sheets()
+                    if error:
+                        st.error(f"❌ {error}")
+                    else:
+                        st.session_state.df = df
+                        calculate_personal_records()
+                        st.success("✅ Synced!")
+                        st.rerun()
+
+        with col2:
+            if st.button("💾 Save to Cloud", use_container_width=True, disabled=(st.session_state.df is None)):
+                if st.session_state.df is not None:
+                    with st.spinner("Saving..."):
+                        success, error = save_data_to_google_sheets(st.session_state.df)
+                        if error:
+                            st.error(f"❌ {error}")
+                        else:
+                            st.success("✅ Saved!")
+
+        st.markdown("---")
+
+    # Excel file upload (alternative/backup method)
+    st.subheader("📂 Local File Upload")
 
     uploaded_excel = st.file_uploader("Upload Training Data Excel", type=['xlsx'], key='excel_upload')
 
@@ -886,6 +1074,7 @@ with st.sidebar:
             else:
                 st.error(message)
 
+    # Data status
     if st.session_state.df is not None:
         st.success(f"✅ {len(st.session_state.df)} sessions loaded")
 
@@ -900,6 +1089,11 @@ with st.sidebar:
                 file_name=f"Mia_Training_Data_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+    else:
+        if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+            st.info("💡 Data will auto-load from Google Sheets")
+        else:
+            st.info("💡 Upload an Excel file or configure Google Sheets")
 
 # Main tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -1035,7 +1229,19 @@ with tab1:
                 st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_row])], ignore_index=True)
 
             calculate_personal_records()
-            st.success("✅ Session added successfully!")
+
+            # Auto-save to Google Sheets if configured
+            if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
+                with st.spinner("Saving to Google Sheets..."):
+                    success, error = save_data_to_google_sheets(st.session_state.df)
+                    if error:
+                        st.warning(f"⚠️ Session added locally but cloud save failed: {error}")
+                        st.info("💡 Use 'Save to Cloud' button in sidebar to sync manually")
+                    else:
+                        st.success("✅ Session added and saved to cloud!")
+            else:
+                st.success("✅ Session added successfully!")
+
             st.session_state['extracted_data'] = {}  # Clear extracted data
             st.rerun()
 
