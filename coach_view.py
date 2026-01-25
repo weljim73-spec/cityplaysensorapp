@@ -1157,13 +1157,16 @@ with tab3:
     # Chart selection
     chart_option = st.selectbox(
         "Select Chart",
-        ["Top Speed Progress", "Ball Touches Progress", "Sprint Distance Progress",
+        ["-- Select a Chart --", "Top Speed Progress", "Ball Touches Progress", "Sprint Distance Progress",
          "Kicking Power Progress", "Agility Performance", "Turn Speed Analysis"]
     )
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if chart_option == "-- Select a Chart --":
+        st.info("📊 **Select a Chart from the List Above**")
+    else:
+        fig, ax = plt.subplots(figsize=(10, 6))
 
-    if chart_option == "Top Speed Progress":
+        if chart_option == "Top Speed Progress":
         if 'top_speed' in df_analytics.columns and 'date' in df_analytics.columns:
             speed_data = df_analytics[['date', 'top_speed']].dropna()
             ax.plot(speed_data['date'], speed_data['top_speed'], marker='o', linewidth=2, markersize=8)
@@ -1245,9 +1248,9 @@ with tab3:
             ax.grid(True, alpha=0.3)
             plt.xticks(rotation=45)
 
-    plt.tight_layout()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+        plt.tight_layout()
+        st.pyplot(fig, use_container_width=True)
+        plt.close(fig)
 
 # Tab 4: Speed
 with tab4:
