@@ -1502,9 +1502,9 @@ with tab2:
             if st.session_state.df is not None and 'session_name' in st.session_state.df.columns:
                 existing_sessions = st.session_state.df['session_name'].dropna().unique().tolist()
             session_options = ["-- Enter New --"] + sorted(existing_sessions)
-            session_choice = st.selectbox("Session Name", session_options)
+            session_choice = st.selectbox("Session Name", session_options, key="session_name_select")
             if session_choice == "-- Enter New --":
-                session_name = st.text_input("Enter Session Name", value=extracted_data.get('session_name', ''))
+                session_name = st.text_input("↳ Enter New Session Name", value=extracted_data.get('session_name', ''), key="session_name_input")
             else:
                 session_name = session_choice
 
@@ -1513,9 +1513,9 @@ with tab2:
             if st.session_state.df is not None and 'coach' in st.session_state.df.columns:
                 existing_coaches = st.session_state.df['coach'].dropna().unique().tolist()
             coach_options = ["-- Enter New --"] + sorted(existing_coaches)
-            coach_choice = st.selectbox("Coach", coach_options)
+            coach_choice = st.selectbox("Coach", coach_options, key="coach_select")
             if coach_choice == "-- Enter New --":
-                coach = st.text_input("Enter Coach Name", value=extracted_data.get('coach', ''))
+                coach = st.text_input("↳ Enter New Coach Name", value=extracted_data.get('coach', ''), key="coach_input")
             else:
                 coach = coach_choice
 
@@ -1524,9 +1524,9 @@ with tab2:
             if st.session_state.df is not None and 'location' in st.session_state.df.columns:
                 existing_locations = st.session_state.df['location'].dropna().unique().tolist()
             location_options = ["-- Enter New --"] + sorted(existing_locations)
-            location_choice = st.selectbox("Location", location_options)
+            location_choice = st.selectbox("Location", location_options, key="location_select")
             if location_choice == "-- Enter New --":
-                location = st.text_input("Enter Location", value=extracted_data.get('location', ''))
+                location = st.text_input("↳ Enter New Location", value=extracted_data.get('location', ''), key="location_input")
             else:
                 location = location_choice
 
@@ -1600,7 +1600,7 @@ with tab2:
                 work_rate = ''
                 ball_possessions = 0
 
-        submitted = st.form_submit_button("💾 Add to Excel")
+        submitted = st.form_submit_button("💾 Add to Data File")
 
         if submitted:
             # Create new row with all fields
