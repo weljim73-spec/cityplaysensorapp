@@ -1235,9 +1235,10 @@ with st.sidebar:
             st.info("💡 Upload an Excel file or configure Google Sheets")
 
 # Main tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "📊 Dashboard",
     "📸 Upload & Extract",
-    "📊 Analytics",
+    "📈 Analytics",
     "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
@@ -1245,8 +1246,152 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🤖 AI Insights"
 ])
 
-# Tab 1: Upload & Extract
+# Tab 1: Dashboard
 with tab1:
+    st.header("📊 Training Dashboard")
+
+    if st.session_state.df is None or len(st.session_state.df) == 0:
+        st.warning("📊 No data loaded. Please upload your Excel file in the sidebar or sync from Google Sheets.")
+    else:
+        df = st.session_state.df.copy()
+
+        # Key Metrics Row 1
+        st.subheader("🎯 Key Performance Indicators")
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            if 'top_speed' in df.columns:
+                current_speed = pd.to_numeric(df['top_speed'], errors='coerce').iloc[-1] if len(df) > 0 else 0
+                best_speed = pd.to_numeric(df['top_speed'], errors='coerce').max()
+                avg_speed = pd.to_numeric(df['top_speed'], errors='coerce').mean()
+                st.metric("Top Speed (mph)", f"{current_speed:.1f}",
+                         delta=f"Best: {best_speed:.1f} | Avg: {avg_speed:.1f}")
+
+        with col2:
+            if 'intense_turns' in df.columns:
+                current_turns = pd.to_numeric(df['intense_turns'], errors='coerce').iloc[-1] if len(df) > 0 else 0
+                best_turns = pd.to_numeric(df['intense_turns'], errors='coerce').max()
+                avg_turns = pd.to_numeric(df['intense_turns'], errors='coerce').mean()
+                st.metric("Intense Turns", f"{current_turns:.1f}",
+                         delta=f"Best: {best_turns:.1f} | Avg: {avg_turns:.1f}")
+
+        with col3:
+            if 'ball_touches' in df.columns:
+                current_touches = pd.to_numeric(df['ball_touches'], errors='coerce').iloc[-1] if len(df) > 0 else 0
+                best_touches = pd.to_numeric(df['ball_touches'], errors='coerce').max()
+                avg_touches = pd.to_numeric(df['ball_touches'], errors='coerce').mean()
+                st.metric("Ball Touches", f"{current_touches:.0f}",
+                         delta=f"Best: {best_touches:.0f} | Avg: {avg_touches:.0f}")
+
+        with col4:
+            if 'num_sprints' in df.columns:
+                current_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').iloc[-1] if len(df) > 0 else 0
+                best_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').max()
+                avg_sprints = pd.to_numeric(df['num_sprints'], errors='coerce').mean()
+                st.metric("Sprints", f"{current_sprints:.0f}",
+                         delta=f"Best: {best_sprints:.0f} | Avg: {avg_sprints:.0f}")
+
+        st.markdown("---")
+
+        # Training Summary Row
+        st.subheader("📅 Training Summary")
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric("Total Sessions", len(df))
+
+        with col2:
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'], errors='coerce')
+                date_range = (df['date'].max() - df['date'].min()).days
+                st.metric("Training Period (days)", date_range)
+
+        with col3:
+            if 'duration' in df.columns:
+                total_mins = pd.to_numeric(df['duration'], errors='coerce').sum()
+                st.metric("Total Training Time", f"{total_mins/60:.1f} hrs")
+
+        with col4:
+            if 'with_ball' in df.columns:
+                ball_sessions = (df['with_ball'].str.lower() == 'yes').sum()
+                st.metric("Ball Work Sessions", f"{ball_sessions}/{len(df)}")
+
+        st.markdown("---")
+
+        # Recent Performance Trends
+        st.subheader("📈 Recent Trends (Last 5 Sessions)")
+
+        if len(df) >= 5:
+            recent_df = df.tail(5)
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                # Speed trend
+                if 'top_speed' in recent_df.columns and 'date' in recent_df.columns:
+                    fig, ax = plt.subplots(figsize=(8, 4))
+                    speed_data = recent_df[['date', 'top_speed']].dropna()
+                    if len(speed_data) > 0:
+                        ax.plot(speed_data['date'], speed_data['top_speed'],
+                               marker='o', linewidth=2, markersize=8, color='#1E88E5')
+                        ax.set_xlabel('Date', fontsize=10)
+                        ax.set_ylabel('Top Speed (mph)', fontsize=10)
+                        ax.set_title('Top Speed Trend', fontsize=12, fontweight='bold')
+                        ax.grid(True, alpha=0.3)
+                        plt.xticks(rotation=45)
+                        plt.tight_layout()
+                        st.pyplot(fig, use_container_width=True)
+                        plt.close(fig)
+
+            with col2:
+                # Agility trend
+                if 'intense_turns' in recent_df.columns and 'date' in recent_df.columns:
+                    fig, ax = plt.subplots(figsize=(8, 4))
+                    agility_data = recent_df[['date', 'intense_turns']].dropna()
+                    if len(agility_data) > 0:
+                        ax.plot(agility_data['date'], agility_data['intense_turns'],
+                               marker='s', linewidth=2, markersize=8, color='#E53935')
+                        ax.set_xlabel('Date', fontsize=10)
+                        ax.set_ylabel('Intense Turns', fontsize=10)
+                        ax.set_title('Agility Trend', fontsize=12, fontweight='bold')
+                        ax.grid(True, alpha=0.3)
+                        plt.xticks(rotation=45)
+                        plt.tight_layout()
+                        st.pyplot(fig, use_container_width=True)
+                        plt.close(fig)
+        else:
+            st.info("Need at least 5 sessions to show trend charts")
+
+        st.markdown("---")
+
+        # Quick Insights
+        st.subheader("💡 Quick Insights")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # Two-footed balance
+            if 'left_touches' in df.columns and 'right_touches' in df.columns:
+                left_total = pd.to_numeric(df['left_touches'], errors='coerce').sum()
+                right_total = pd.to_numeric(df['right_touches'], errors='coerce').sum()
+                if right_total > 0:
+                    ratio = left_total / right_total
+                    st.info(f"**⚖️ Two-Footed Balance**\n\nLeft/Right Ratio: {ratio:.2f}\n\n" +
+                           ("✅ Excellent balance!" if ratio >= 0.5 else
+                            "📈 Good progress - keep working left foot!" if ratio >= 0.4 else
+                            "⚠️ Focus on left foot development"))
+
+        with col2:
+            # Training intensity
+            if 'intensity' in df.columns:
+                intensity_counts = df['intensity'].value_counts()
+                if len(intensity_counts) > 0:
+                    most_common = intensity_counts.index[0]
+                    count = intensity_counts.iloc[0]
+                    st.info(f"**🔥 Training Intensity**\n\nMost Common: {most_common}\n\n" +
+                           f"Used in {count}/{len(df)} sessions ({count/len(df)*100:.0f}%)")
+
+# Tab 2: Upload & Extract
+with tab2:
     st.header("Upload CityPlay Screenshots")
 
     uploaded_files = st.file_uploader(
@@ -1385,11 +1530,8 @@ with tab1:
             st.session_state['extracted_data'] = {}  # Clear extracted data
             st.rerun()
 
-# Continue with other tabs in next part...
-# This is the continuation to append to streamlit_app.py after line "# Continue with other tabs in next part..."
-
-# Tab 2: Analytics
-with tab2:
+# Tab 3: Analytics
+with tab3:
     st.header("📊 Training Analytics")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1497,8 +1639,8 @@ with tab2:
         st.pyplot(fig, use_container_width=True)
         plt.close(fig)
 
-# Tab 3: Speed
-with tab3:
+# Tab 4: Speed
+with tab4:
     st.header("⚡ Speed Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1568,8 +1710,8 @@ with tab3:
                         st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                         st.caption(description)
 
-# Tab 4: Agility
-with tab4:
+# Tab 5: Agility
+with tab5:
     st.header("🔄 Agility Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1641,8 +1783,8 @@ with tab4:
                         st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                         st.caption(description)
 
-# Tab 5: Ball Work
-with tab5:
+# Tab 6: Ball Work
+with tab6:
     st.header("⚽ Ball Work Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -1728,8 +1870,8 @@ with tab5:
                 st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
                 st.caption("⚖️ Target: ≥ 0.5 for balance")
 
-# Tab 6: Personal Records
-with tab6:
+# Tab 7: Personal Records
+with tab7:
     st.header("🏆 Personal Records")
 
     if not st.session_state.personal_records:
@@ -1761,8 +1903,8 @@ with tab6:
                 if pr_date:
                     st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 7: AI Insights - Comprehensive Analysis
-with tab7:
+# Tab 8: AI Insights - Comprehensive Analysis
+with tab8:
     st.header("🤖 AI Insights")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
