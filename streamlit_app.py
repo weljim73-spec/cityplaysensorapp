@@ -1556,7 +1556,7 @@ with tab2:
             right_turns = st.number_input("Right Turns", value=int(extracted_data.get('right_turns', 0)) if extracted_data.get('right_turns') else 0)
             back_turns = st.number_input("Back Turns", value=int(extracted_data.get('back_turns', 0)) if extracted_data.get('back_turns') else 0)
             intense_turns = st.number_input("Intense Turns", value=int(extracted_data.get('intense_turns', 0)) if extracted_data.get('intense_turns') else 0)
-            total_turns = st.number_input("Total Turns", value=int(extracted_data.get('total_turns', 0)) if extracted_data.get('total_turns') else 0)
+            # Total Turns - calculated field (removed from user input)
             avg_turn_entry = st.number_input("Avg Turn Entry Speed (mph)", value=float(extracted_data.get('avg_turn_entry', 0)) if extracted_data.get('avg_turn_entry') else 0.0, format="%.1f")
             avg_turn_exit = st.number_input("Avg Turn Exit Speed (mph)", value=float(extracted_data.get('avg_turn_exit', 0)) if extracted_data.get('avg_turn_exit') else 0.0, format="%.1f")
 
@@ -1564,10 +1564,10 @@ with tab2:
             # Ball Work fields - shown for Ball Work and Match types
             if selected_training_type in ["Ball Work", "Match-Grass", "Match-Turf", "Match-Hard"]:
                 st.write("**Ball Work**")
-                ball_touches = st.number_input("Ball Touches", value=int(extracted_data.get('ball_touches', 0)) if extracted_data.get('ball_touches') else 0)
+                # Ball Touches - calculated field (removed from user input)
                 left_touches = st.number_input("Left Foot Touches", value=int(extracted_data.get('left_touches', 0)) if extracted_data.get('left_touches') else 0)
                 right_touches = st.number_input("Right Foot Touches", value=int(extracted_data.get('right_touches', 0)) if extracted_data.get('right_touches') else 0)
-                left_foot_pct = st.number_input("Left Foot %", value=float(extracted_data.get('left_foot_pct', 0)) if extracted_data.get('left_foot_pct') else 0.0, format="%.1f")
+                # Left Foot % - calculated field (removed from user input)
                 left_releases = st.number_input("Left Releases", value=int(extracted_data.get('left_releases', 0)) if extracted_data.get('left_releases') else 0)
                 right_releases = st.number_input("Right Releases", value=int(extracted_data.get('right_releases', 0)) if extracted_data.get('right_releases') else 0)
                 kicking_power = st.number_input("Kicking Power (mph)", value=float(extracted_data.get('kicking_power_mph', 0)) if extracted_data.get('kicking_power_mph') else 0.0, format="%.2f")
@@ -1575,10 +1575,8 @@ with tab2:
                 right_kicking_power = st.number_input("Right Kicking Power (mph)", value=float(extracted_data.get('right_kicking_power_mph', 0)) if extracted_data.get('right_kicking_power_mph') else 0.0, format="%.2f")
             else:
                 # Set defaults for Speed and Agility
-                ball_touches = 0
                 left_touches = 0
                 right_touches = 0
-                left_foot_pct = 0
                 left_releases = 0
                 right_releases = 0
                 kicking_power = 0
@@ -1591,19 +1589,31 @@ with tab2:
                 position = st.text_input("Position", value=extracted_data.get('position', ''))
                 goals = st.number_input("Goals", value=int(extracted_data.get('goals', 0)) if extracted_data.get('goals') else 0)
                 assists = st.number_input("Assists", value=int(extracted_data.get('assists', 0)) if extracted_data.get('assists') else 0)
-                work_rate = st.text_input("Work Rate", value=extracted_data.get('work_rate', ''))
+                # Work Rate - calculated field (removed from user input)
                 ball_possessions = st.number_input("Ball Possessions", value=int(extracted_data.get('ball_possessions', 0)) if extracted_data.get('ball_possessions') else 0)
             else:
                 # Set defaults for non-match types
                 position = ''
                 goals = 0
                 assists = 0
-                work_rate = ''
                 ball_possessions = 0
 
         submitted = st.form_submit_button("💾 Add to Data File")
 
         if submitted:
+            # Calculate derived fields
+            # Total Turns = Left Turns + Right Turns + Back Turns
+            total_turns = left_turns + right_turns + back_turns
+
+            # Ball Touches = Left Foot Touches + Right Foot Touches
+            ball_touches = left_touches + right_touches
+
+            # Left Foot % = Left Foot Touches / Ball Touches (if Ball Touches > 0)
+            left_foot_pct = (left_touches / ball_touches * 100) if ball_touches > 0 else 0
+
+            # Work Rate = Total Distance / Duration (if Duration > 0)
+            work_rate = (total_distance / duration) if duration > 0 else 0
+
             # Create new row with all fields
             new_row = {
                 'date': date,
