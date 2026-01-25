@@ -1481,6 +1481,10 @@ with tab2:
     # Data entry form
     st.subheader("Session Data Entry")
 
+    # Initialize extracted_data in session state if not present
+    if 'extracted_data' not in st.session_state:
+        st.session_state['extracted_data'] = {}
+
     extracted_data = st.session_state.get('extracted_data', {})
 
     # Training type selection (outside form to control field visibility)
@@ -1598,7 +1602,16 @@ with tab2:
                 assists = 0
                 ball_possessions = 0
 
-        submitted = st.form_submit_button("💾 Add to Data File")
+        col_submit1, col_submit2 = st.columns([1, 1])
+        with col_submit1:
+            submitted = st.form_submit_button("💾 Add to Data File", use_container_width=True)
+        with col_submit2:
+            reset = st.form_submit_button("🔄 Reset Form", use_container_width=True)
+
+        if reset:
+            # Clear extracted data to reset form
+            st.session_state['extracted_data'] = {}
+            st.rerun()
 
         if submitted:
             # Calculate derived fields
