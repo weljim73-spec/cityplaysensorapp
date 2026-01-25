@@ -1597,6 +1597,34 @@ with tab7:
                     with col2:
                         st.markdown(f"**📊 {total_sessions} sessions**")
 
+            # Specific session selector
+            if 'date' in df_match.columns and 'session_name' in df_match.columns:
+                # Create session labels with date and session name
+                df_temp = df_match.copy()
+                df_temp['date'] = pd.to_datetime(df_temp['date'], errors='coerce')
+                df_temp = df_temp.sort_values('date', ascending=False)
+
+                session_options = []
+                session_indices = []
+                for idx, row in df_temp.iterrows():
+                    if pd.notna(row['date']) and pd.notna(row['session_name']):
+                        date_str = row['date'].strftime('%b %d, %Y')
+                        session_label = f"{date_str} - {row['session_name']}"
+                        session_options.append(session_label)
+                        session_indices.append(idx)
+
+                if len(session_options) > 0:
+                    selected_session = st.selectbox(
+                        "Select a Specific Match",
+                        ["All Matches"] + session_options,
+                        key="match_session_filter"
+                    )
+
+                    if selected_session != "All Matches":
+                        # Find the selected session index
+                        selected_idx = session_indices[session_options.index(selected_session)]
+                        df_match = df_match[df_match.index == selected_idx]
+
             # Match-Specific KPIs
             st.subheader("🎯 Match Performance Indicators")
 
