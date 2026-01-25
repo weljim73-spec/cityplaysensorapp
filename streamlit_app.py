@@ -11,7 +11,7 @@ st.set_page_config(
     page_title="Mia Training Tracker",
     page_icon="⚽",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 import pandas as pd
@@ -213,7 +213,7 @@ def append_row_to_google_sheets(row_data):
     except Exception as e:
         return False, f"Error appending to Google Sheets: {str(e)}"
 
-# Custom CSS for mobile responsiveness
+# Custom CSS for mobile responsiveness and hide sidebar
 st.markdown("""
 <style>
     .main-header {
@@ -231,6 +231,19 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab-list"] {
         gap: 2rem;
+    }
+    /* Hide sidebar completely */
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    [data-testid="collapsedControl"] {
+        display: none;
+    }
+    /* Adjust main content to use full width */
+    .main .block-container {
+        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 </style>
 """, unsafe_allow_html=True)
