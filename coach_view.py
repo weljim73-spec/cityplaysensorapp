@@ -904,16 +904,15 @@ with col2:
     if st.button("🔄 Refresh", type="primary", use_container_width=True):
         st.rerun()
 
-# Create tabs - 8 tabs total
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+# Create tabs - 7 tabs total
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Dashboard",
     "🤖 AI Insights",
     "📈 Analytics",
     "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
-    "🏆 Personal Records",
-    "📋 Raw Data"
+    "🏆 Personal Records"
 ])
 
 # Tab 1: Dashboard
@@ -1476,18 +1475,6 @@ with tab7:
 
             if pr_date:
                 st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
-
-# Tab 8: Raw Data
-with tab8:
-    st.header("📋 Training Sessions - Raw Data")
-
-    # Show recent sessions
-    display_cols = ['date', 'training_type', 'coach', 'duration', 'top_speed', 'intense_turns', 'ball_touches']
-    available_cols = [col for col in display_cols if col in df.columns]
-
-    if available_cols:
-        recent_df = df[available_cols].sort_values('date', ascending=False)
-        st.dataframe(recent_df, use_container_width=True, hide_index=True)
 
 # Footer
 st.markdown("---")
