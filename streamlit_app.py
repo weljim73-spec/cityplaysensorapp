@@ -971,7 +971,109 @@ def analyze_training_data(df):
                 avg_dist_high_touch = pd.to_numeric(high_touch_sessions['total_distance'], errors='coerce').mean()
                 insights += f"    High-touch sessions avg distance: {avg_dist_high_touch:.2f} miles\n"
 
-    # 10. Actionable Recommendations
+    # 10. Training Environment Analysis
+    insights += "\n🌍 TRAINING ENVIRONMENT ANALYSIS\n" + "-" * 80 + "\n"
+
+    # Location analysis
+    if 'location' in df.columns:
+        location_dist = df['location'].value_counts()
+        insights += f"  Training Locations:\n"
+        for location, count in location_dist.items():
+            insights += f"    • {location}: {count} sessions ({count/len(df)*100:.1f}%)\n"
+
+        # Performance by location
+        if 'top_speed' in df.columns and len(location_dist) > 1:
+            insights += f"\n  Performance by Location:\n"
+            for location in location_dist.index:
+                loc_df = df[df['location'] == location]
+                avg_speed = pd.to_numeric(loc_df['top_speed'], errors='coerce').mean()
+                if pd.notna(avg_speed):
+                    insights += f"    {location}: Avg Top Speed {avg_speed:.1f} mph\n"
+
+    # Surface analysis
+    if 'surface' in df.columns:
+        surface_dist = df['surface'].value_counts()
+        insights += f"\n  Surface Distribution:\n"
+        for surface, count in surface_dist.items():
+            insights += f"    • {surface}: {count} sessions ({count/len(df)*100:.1f}%)\n"
+
+        # Performance by surface
+        if len(surface_dist) > 1:
+            insights += f"\n  Surface Performance Comparison:\n"
+            for surface in surface_dist.index:
+                surf_df = df[df['surface'] == surface]
+
+                if 'top_speed' in df.columns:
+                    avg_speed = pd.to_numeric(surf_df['top_speed'], errors='coerce').mean()
+                    if pd.notna(avg_speed):
+                        insights += f"    {surface}:\n"
+                        insights += f"      - Top Speed: {avg_speed:.1f} mph\n"
+
+                if 'intense_turns' in df.columns:
+                    avg_turns = pd.to_numeric(surf_df['intense_turns'], errors='coerce').mean()
+                    if pd.notna(avg_turns):
+                        insights += f"      - Intense Turns: {avg_turns:.1f}\n"
+
+            # Find best surface
+            if 'top_speed' in df.columns:
+                best_surface = None
+                best_speed = 0
+                for surface in surface_dist.index:
+                    surf_df = df[df['surface'] == surface]
+                    avg_speed = pd.to_numeric(surf_df['top_speed'], errors='coerce').mean()
+                    if pd.notna(avg_speed) and avg_speed > best_speed:
+                        best_speed = avg_speed
+                        best_surface = surface
+                if best_surface:
+                    insights += f"\n    ✅ Best surface for speed: {best_surface} ({best_speed:.1f} mph avg)\n"
+
+    # With Ball vs Without Ball analysis
+    if 'with_ball' in df.columns:
+        ball_dist = df['with_ball'].value_counts()
+        insights += f"\n  Ball Work Distribution:\n"
+        for status, count in ball_dist.items():
+            insights += f"    • {status} Ball: {count} sessions ({count/len(df)*100:.1f}%)\n"
+
+        # Compare ball vs non-ball sessions
+        if len(ball_dist) > 1:
+            ball_sessions = df[df['with_ball'].str.lower() == 'yes']
+            no_ball_sessions = df[df['with_ball'].str.lower() == 'no']
+
+            insights += f"\n  Ball vs Non-Ball Performance:\n"
+
+            if 'top_speed' in df.columns:
+                ball_speed = pd.to_numeric(ball_sessions['top_speed'], errors='coerce').mean()
+                no_ball_speed = pd.to_numeric(no_ball_sessions['top_speed'], errors='coerce').mean()
+                if pd.notna(ball_speed) and pd.notna(no_ball_speed):
+                    insights += f"    Top Speed: With Ball {ball_speed:.1f} mph | Without Ball {no_ball_speed:.1f} mph\n"
+                    diff = no_ball_speed - ball_speed
+                    if diff > 1:
+                        insights += f"    💡 {diff:.1f} mph faster without ball - expected for pure speed work\n"
+
+            if 'intense_turns' in df.columns:
+                ball_turns = pd.to_numeric(ball_sessions['intense_turns'], errors='coerce').mean()
+                no_ball_turns = pd.to_numeric(no_ball_sessions['intense_turns'], errors='coerce').mean()
+                if pd.notna(ball_turns) and pd.notna(no_ball_turns):
+                    insights += f"    Intense Turns: With Ball {ball_turns:.1f} | Without Ball {no_ball_turns:.1f}\n"
+
+            if 'duration' in df.columns:
+                ball_duration = pd.to_numeric(ball_sessions['duration'], errors='coerce').mean()
+                no_ball_duration = pd.to_numeric(no_ball_sessions['duration'], errors='coerce').mean()
+                if pd.notna(ball_duration) and pd.notna(no_ball_duration):
+                    insights += f"    Avg Duration: With Ball {ball_duration:.0f} min | Without Ball {no_ball_duration:.0f} min\n"
+
+    # Session type analysis
+    if 'session_name' in df.columns:
+        session_dist = df['session_name'].value_counts()
+        insights += f"\n  Session Types:\n"
+        top_sessions = session_dist.head(5)
+        for session, count in top_sessions.items():
+            insights += f"    • {session}: {count} sessions\n"
+
+        if len(session_dist) > 5:
+            insights += f"    • ({len(session_dist) - 5} other session types)\n"
+
+    # 11. Actionable Recommendations
     insights += "\n💡 PERSONALIZED ACTION PLAN\n" + "-" * 80 + "\n"
 
     recommendations = []
@@ -1013,7 +1115,7 @@ def analyze_training_data(df):
         insights += "  ✅ All metrics show balanced, effective development!\n"
         insights += "     Continue current training approach.\n"
 
-    # 11. Next Milestones
+    # 12. Next Milestones
     insights += "\n🎯 NEXT MILESTONE TARGETS\n" + "-" * 80 + "\n"
 
     if 'top_speed' in df.columns:
