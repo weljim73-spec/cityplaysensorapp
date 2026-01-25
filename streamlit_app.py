@@ -247,14 +247,6 @@ if 'uploaded_images' not in st.session_state:
 if 'initial_load_done' not in st.session_state:
     st.session_state.initial_load_done = False
 
-# Auto-load data from Google Sheets on app startup
-if not st.session_state.initial_load_done and GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
-    df, error = load_data_from_google_sheets()
-    if not error and df is not None:
-        st.session_state.df = df
-        calculate_personal_records()
-    st.session_state.initial_load_done = True
-
 # Column mapping for Excel data
 COLUMN_MAPPING = {
     # Session Info
