@@ -1,6 +1,6 @@
 # ⚽ Mia Training Tracker - Web App
 
-A comprehensive soccer training analytics platform with automatic Google Sheets sync, built with Streamlit.
+A comprehensive soccer training analytics platform with automatic Google Sheets sync, built with Streamlit.  The data structure is based on data collected by CityPlay soccer boot sensors.
 
 ## 🌟 Features
 
