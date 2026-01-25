@@ -1599,6 +1599,9 @@ with tab7:
                         st.markdown(f"**📊 {total_sessions} sessions**")
 
             # Specific session selector
+            # Debug: Show available columns
+            st.write(f"DEBUG - Available columns: {df_match.columns.tolist()}")
+
             # Create session labels with date and session name
             df_temp = df_match.copy()
             if 'date' in df_temp.columns:
@@ -1612,6 +1615,8 @@ with tab7:
             has_date = 'date' in df_temp.columns
             has_session = 'session_name' in df_temp.columns
 
+            st.write(f"DEBUG - has_date: {has_date}, has_session: {has_session}")
+
             if has_date and has_session:
                 for idx, row in df_temp.iterrows():
                     if pd.notna(row['date']) and pd.notna(row['session_name']):
@@ -1619,6 +1624,8 @@ with tab7:
                         session_label = f"{date_str} - {row['session_name']}"
                         session_options.append(session_label)
                         session_indices.append(idx)
+
+            st.write(f"DEBUG - Found {len(session_options)} session options")
 
             if len(session_options) > 0:
                 selected_session = st.selectbox(
