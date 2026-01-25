@@ -896,8 +896,13 @@ personal_records, pr_dates = calculate_personal_records(df)
 st.session_state.personal_records = personal_records
 st.session_state.pr_dates = pr_dates
 
-# Show last sync time
-st.markdown(f'<div class="refresh-info">📊 Showing {len(df)} training sessions | Last refreshed: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Refresh page to see latest data</div>', unsafe_allow_html=True)
+# Show last sync time with refresh button
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.markdown(f'<div class="refresh-info">📊 Showing {len(df)} training sessions | Last refreshed: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</div>', unsafe_allow_html=True)
+with col2:
+    if st.button("🔄 Refresh", type="primary", use_container_width=True):
+        st.rerun()
 
 # Create tabs - 8 tabs total
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
