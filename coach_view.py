@@ -117,7 +117,13 @@ def load_data_from_google_sheets():
         headers = data[0]
         rows = data[1:]
 
-        df = pd.DataFrame(rows, columns=headers)
+        # Convert all values to strings first to ensure clean data
+        clean_rows = []
+        for row in rows:
+            clean_row = [str(val) if val is not None else '' for val in row]
+            clean_rows.append(clean_row)
+
+        df = pd.DataFrame(clean_rows, columns=headers)
 
         # Normalize column names
         df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
@@ -163,7 +169,9 @@ def load_data_from_google_sheets():
         return df, None
 
     except Exception as e:
-        return None, f"Error loading from Google Sheets: {str(e)}"
+        import traceback
+        error_details = traceback.format_exc()
+        return None, f"Error loading from Google Sheets: {str(e)}\n\nDetails: {error_details}"
 
 def calculate_personal_records(df):
     """Calculate all personal records from loaded data"""
