@@ -8,7 +8,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
-import pytesseract
 from PIL import Image
 import io
 import re
@@ -18,6 +17,29 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Try to import pytesseract and configure for Streamlit Cloud
+try:
+    import pytesseract
+    import os
+
+    # Configure Tesseract path for different environments
+    # Streamlit Cloud uses /usr/bin/tesseract
+    if os.path.exists('/usr/bin/tesseract'):
+        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+    elif os.path.exists('/opt/homebrew/bin/tesseract'):
+        pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+
+    # Test if tesseract is working
+    try:
+        pytesseract.get_tesseract_version()
+        OCR_AVAILABLE = True
+    except Exception as e:
+        OCR_AVAILABLE = False
+        st.warning(f"⚠️ OCR not available: Tesseract not found. Manual data entry only.")
+except ImportError:
+    OCR_AVAILABLE = False
+    st.warning("⚠️ OCR not available: pytesseract module not installed. Manual data entry only.")
 
 # Page configuration
 st.set_page_config(
@@ -341,24 +363,30 @@ with tab1:
                 image = Image.open(file)
                 st.image(image, caption=f"Image {idx+1}", use_container_width=True)
 
-        if st.button("🔍 Extract Data from All Images"):
-            with st.spinner("Processing images with OCR..."):
-                all_extracted = {}
+        if st.button("🔍 Extract Data from All Images", disabled=not OCR_AVAILABLE):
+            if not OCR_AVAILABLE:
+                st.error("❌ OCR is not available. Please enter data manually below.")
+            else:
+                with st.spinner("Processing images with OCR..."):
+                    all_extracted = {}
 
-                for file in uploaded_files:
-                    try:
-                        image = Image.open(file)
-                        text = pytesseract.image_to_string(image)
-                        extracted = parse_ocr_text(text)
+                    for file in uploaded_files:
+                        try:
+                            image = Image.open(file)
+                            text = pytesseract.image_to_string(image)
+                            extracted = parse_ocr_text(text)
 
-                        for key, value in extracted.items():
-                            if value and str(value).strip():
-                                all_extracted[key] = value
-                    except Exception as e:
-                        st.error(f"Error processing {file.name}: {e}")
+                            for key, value in extracted.items():
+                                if value and str(value).strip():
+                                    all_extracted[key] = value
+                        except Exception as e:
+                            st.error(f"Error processing {file.name}: {e}")
 
-                st.success(f"✅ Extracted {len(all_extracted)} fields!")
-                st.session_state['extracted_data'] = all_extracted
+                    st.success(f"✅ Extracted {len(all_extracted)} fields!")
+                    st.session_state['extracted_data'] = all_extracted
+
+        if not OCR_AVAILABLE and uploaded_files:
+            st.info("💡 OCR unavailable. Please manually enter data from your screenshots below.")
 
     # Data entry form
     st.subheader("Session Data Entry")
