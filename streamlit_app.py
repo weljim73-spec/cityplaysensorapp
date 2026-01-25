@@ -1485,6 +1485,10 @@ with tab2:
     if 'extracted_data' not in st.session_state:
         st.session_state['extracted_data'] = {}
 
+    # Initialize form counter for reset functionality
+    if 'form_counter' not in st.session_state:
+        st.session_state['form_counter'] = 0
+
     extracted_data = st.session_state.get('extracted_data', {})
 
     # Training type selection (outside form to control field visibility)
@@ -1492,10 +1496,10 @@ with tab2:
     selected_training_type = st.selectbox(
         "Select Training Type",
         training_types,
-        key="training_type_selector"
+        key=f"training_type_selector_{st.session_state['form_counter']}"
     )
 
-    with st.form("session_form"):
+    with st.form(f"session_form_{st.session_state['form_counter']}"):
         col1, col2 = st.columns(2)
 
         with col1:
@@ -1609,8 +1613,9 @@ with tab2:
             reset = st.form_submit_button("🔄 Reset Form", use_container_width=True)
 
         if reset:
-            # Clear extracted data to reset form
+            # Clear extracted data and increment form counter to reset form
             st.session_state['extracted_data'] = {}
+            st.session_state['form_counter'] += 1
             st.rerun()
 
         if submitted:
@@ -1687,6 +1692,7 @@ with tab2:
                 st.success("✅ Session added successfully!")
 
             st.session_state['extracted_data'] = {}  # Clear extracted data
+            st.session_state['form_counter'] += 1  # Increment to reset form
             st.rerun()
 
 # Tab 3: Analytics
