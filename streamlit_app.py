@@ -1133,6 +1133,18 @@ def analyze_training_data(df):
 
     return insights
 
+# Open Graph meta tags for link previews
+st.markdown("""
+<meta property="og:title" content="Mia Training Tracker" />
+<meta property="og:description" content="Soccer Performance Analytics - Track speed, agility, ball work, and comprehensive training metrics" />
+<meta property="og:image" content="https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/preview.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Mia Training Tracker" />
+<meta name="twitter:description" content="Soccer Performance Analytics" />
+<meta name="twitter:image" content="https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/preview.png" />
+""", unsafe_allow_html=True)
+
 # Main App Header
 st.markdown('<div class="main-header">⚽ Mia Training Tracker</div>', unsafe_allow_html=True)
 

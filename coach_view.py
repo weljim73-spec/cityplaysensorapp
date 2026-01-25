@@ -862,6 +862,18 @@ def analyze_training_data(df):
 
     return insights
 
+# Open Graph meta tags for link previews
+st.markdown("""
+<meta property="og:title" content="Mia Training Tracker - Coach View" />
+<meta property="og:description" content="Read-only soccer performance analytics dashboard for coaches" />
+<meta property="og:image" content="https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/preview.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Mia Training Tracker - Coach View" />
+<meta name="twitter:description" content="Read-only performance dashboard" />
+<meta name="twitter:image" content="https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/preview.png" />
+""", unsafe_allow_html=True)
+
 # Main App
 st.markdown('<div class="main-header">⚽ Mia Training Tracker - Coach View</div>', unsafe_allow_html=True)
 st.markdown('<div class="read-only-badge">📖 Read-Only View for Coaches | Auto-Syncs with Latest Data</div>', unsafe_allow_html=True)
