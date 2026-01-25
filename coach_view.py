@@ -114,28 +114,24 @@ def load_data_from_google_sheets():
         if len(data) < 2:
             return None, "No data found in Google Sheet"
 
+        # First row is headers
         headers = data[0]
         rows = data[1:]
 
-        # Convert all values to strings first to ensure clean data
-        clean_rows = []
-        for row in rows:
-            clean_row = [str(val) if val is not None else '' for val in row]
-            clean_rows.append(clean_row)
+        # Create DataFrame
+        df = pd.DataFrame(rows, columns=headers)
 
-        df = pd.DataFrame(clean_rows, columns=headers)
-
-        # Normalize column names
+        # Normalize column names to lowercase with underscores for consistency
         df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
 
-        # Apply column mapping
+        # Apply the same column mapping as Excel load (for internal consistency)
+        # This maps your Google Sheet column names to the internal names the app uses
         column_mapping = {
             'top_speed_mph': 'top_speed',
             'sprint_distance_yd': 'sprint_distance',
             'total_distance_mi': 'total_distance',
             'duration_min': 'duration',
-            'kicking_power_mph': 'kicking_power',
-            'left_foot_pct': 'left_pct',
+            'kicking_power_mph': 'kicking_power_mph',
             'avg_turn_entry_speed_mph': 'avg_turn_entry',
             'avg_turn_exit_speed_mph': 'avg_turn_exit',
             'sprints': 'num_sprints',
@@ -143,23 +139,20 @@ def load_data_from_google_sheets():
         }
         df.rename(columns=column_mapping, inplace=True)
 
-        # Calculate right_pct if missing
-        if 'left_pct' in df.columns and 'right_pct' not in df.columns:
-            df['right_pct'] = 100 - pd.to_numeric(df['left_pct'], errors='coerce')
-
         # Convert date column to datetime
         if 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
 
-        # Convert numeric columns
+        # Convert numeric columns (using internal mapped names)
         numeric_columns = [
             'duration', 'ball_touches', 'total_distance', 'sprint_distance',
-            'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
-            'left_touches', 'right_touches', 'left_pct', 'right_pct',
+            'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
+            'left_touches', 'right_touches', 'left_foot_pct',
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
-            'avg_turn_entry', 'avg_turn_exit', 'total_turns'
+            'avg_turn_entry', 'avg_turn_exit', 'total_turns',
+            'goals', 'assists', 'ball_possessions'
         ]
 
         for col in numeric_columns:
