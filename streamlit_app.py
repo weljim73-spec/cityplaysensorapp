@@ -1366,13 +1366,13 @@ st.markdown("---")
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📊 Dashboard",
     "📸 Upload & Extract",
+    "🤖 AI Insights",
     "📈 Analytics",
     "⚡ Speed",
     "🔄 Agility",
     "⚽ Ball Work",
     "⚽ Match Play",
-    "🏆 Personal Records",
-    "🤖 AI Insights"
+    "🏆 Personal Records"
 ])
 
 # Tab 1: Dashboard
@@ -1876,8 +1876,8 @@ with tab2:
                 st.session_state['pending_submission'] = None
                 st.rerun()
 
-# Tab 3: Analytics
-with tab3:
+# Tab 4: Analytics
+with tab4:
     st.header("📊 Training Analytics")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -2005,8 +2005,8 @@ with tab3:
             st.pyplot(fig, use_container_width=True)
             plt.close(fig)
 
-# Tab 4: Speed
-with tab4:
+# Tab 5: Speed
+with tab5:
     st.header("⚡ Speed Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -2093,8 +2093,8 @@ with tab4:
                         st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                         st.caption(description)
 
-# Tab 5: Agility
-with tab5:
+# Tab 6: Agility
+with tab6:
     st.header("🔄 Agility Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -2183,8 +2183,8 @@ with tab5:
                         st.metric(f"{label} (avg)", f"{avg_val:.1f}", delta=f"Best: {best_val:.1f}")
                         st.caption(description)
 
-# Tab 6: Ball Work
-with tab6:
+# Tab 7: Ball Work
+with tab7:
     st.header("⚽ Ball Work Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -2287,8 +2287,8 @@ with tab6:
                 st.metric("L/R Touch Ratio (avg)", f"{avg_ratio:.2f}", delta=f"Best: {best_ratio:.2f}")
                 st.caption("⚖️ Target: ≥ 0.5 for balance")
 
-# Tab 7: Match Play
-with tab7:
+# Tab 8: Match Play
+with tab8:
     st.header("⚽ Match Play Analysis")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
@@ -2476,8 +2476,8 @@ with tab7:
         else:
             st.info("⚽ No training type data available. Upload data with match training types to see match analysis.")
 
-# Tab 8: Personal Records
-with tab8:
+# Tab 9: Personal Records
+with tab9:
     st.header("🏆 Personal Records")
 
     if not st.session_state.personal_records:
@@ -2516,8 +2516,8 @@ with tab8:
                 if pr_date:
                     st.caption(f"📅 {pr_date.strftime('%b %d, %Y')}")
 
-# Tab 9: AI Insights - Comprehensive Analysis
-with tab9:
+# Tab 3: AI Insights - Comprehensive Analysis
+with tab3:
     st.header("🤖 AI Insights")
 
     if st.session_state.df is None or len(st.session_state.df) == 0:
