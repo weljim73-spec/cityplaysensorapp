@@ -61,6 +61,12 @@ try:
 except ImportError:
     GSHEETS_AVAILABLE = False
 
+# Timezone helper function
+def get_central_time():
+    """Get current time in U.S. Central Time"""
+    central_tz = pytz.timezone('America/Chicago')
+    return datetime.now(central_tz)
+
 # Google Sheets functions
 def connect_to_google_sheets():
     """Connect to Google Sheets using service account credentials from Streamlit secrets"""
@@ -776,7 +782,7 @@ def analyze_training_data(df):
     """Analyze training data and generate comprehensive insights"""
     insights = "🤖 COMPREHENSIVE TRAINING INSIGHTS REPORT\n"
     insights += "=" * 80 + "\n"
-    insights += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    insights += f"Generated: {get_central_time().strftime('%Y-%m-%d %H:%M %Z')}\n"
     insights += f"Total Sessions Analyzed: {len(df)}\n"
 
     if 'date' in df.columns:
@@ -1987,7 +1993,7 @@ with tab4:
         total_sessions = len(df)
         if speed_time_filter == "Last 30 Days" and 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            cutoff_date = get_central_time() - pd.Timedelta(days=30)
             df = df[df['date'] >= cutoff_date]
 
             if len(df) > 0 and df['date'].notna().any():
@@ -2075,7 +2081,7 @@ with tab5:
         total_sessions = len(df)
         if agility_time_filter == "Last 30 Days" and 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            cutoff_date = get_central_time() - pd.Timedelta(days=30)
             df = df[df['date'] >= cutoff_date]
 
             if len(df) > 0 and df['date'].notna().any():
@@ -2165,7 +2171,7 @@ with tab6:
         total_sessions = len(df)
         if ball_time_filter == "Last 30 Days" and 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
-            cutoff_date = datetime.now() - pd.Timedelta(days=30)
+            cutoff_date = get_central_time() - pd.Timedelta(days=30)
             df = df[df['date'] >= cutoff_date]
 
             if len(df) > 0 and df['date'].notna().any():
@@ -2278,7 +2284,7 @@ with tab7:
                 total_sessions = len(df)
                 if match_time_filter == "Last 30 Days" and 'date' in df.columns:
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
-                    cutoff_date = datetime.now() - pd.Timedelta(days=30)
+                    cutoff_date = get_central_time() - pd.Timedelta(days=30)
                     df = df[df['date'] >= cutoff_date]
 
                     if len(df) > 0 and df['date'].notna().any():
@@ -2499,7 +2505,7 @@ with tab9:
             st.download_button(
                 label="📥 Download Report as Text File",
                 data=st.session_state.ai_insights_report,
-                file_name=f"mia_training_insights_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                file_name=f"mia_training_insights_{get_central_time().strftime('%Y%m%d_%H%M')}.txt",
                 mime="text/plain"
             )
 

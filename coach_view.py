@@ -71,6 +71,12 @@ if 'ai_insights_generated' not in st.session_state:
     st.session_state.ai_insights_generated = False
     st.session_state.ai_insights_report = ""
 
+# Timezone helper function
+def get_central_time():
+    """Get current time in U.S. Central Time"""
+    central_tz = pytz.timezone('America/Chicago')
+    return datetime.now(central_tz)
+
 # Google Sheets functions
 def connect_to_google_sheets():
     """Connect to Google Sheets using service account credentials from Streamlit secrets"""
@@ -488,7 +494,7 @@ def analyze_training_data(df):
     """Generate comprehensive insights - exact copy from main app (importing all analyze functions)"""
     insights = "🤖 COMPREHENSIVE TRAINING INSIGHTS REPORT\n"
     insights += "=" * 80 + "\n"
-    insights += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    insights += f"Generated: {get_central_time().strftime('%Y-%m-%d %H:%M %Z')}\n"
     insights += f"Total Sessions Analyzed: {len(df)}\n"
 
     if 'date' in df.columns:
@@ -919,7 +925,7 @@ st.session_state.pr_foot = pr_foot
 # Show last sync time with refresh button
 col1, col2 = st.columns([4, 1])
 with col1:
-    st.markdown(f'<div class="refresh-info">📊 Showing {len(df)} training sessions | Last refreshed: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="refresh-info">📊 Showing {len(df)} training sessions | Last refreshed: {get_central_time().strftime("%Y-%m-%d %H:%M:%S %Z")}</div>', unsafe_allow_html=True)
 with col2:
     if st.button("🔄 Refresh", type="primary", use_container_width=True):
         st.rerun()
@@ -1139,7 +1145,7 @@ with tab2:
     st.download_button(
         label="📥 Download Report as Text File",
         data=insights_report,
-        file_name=f"mia_training_insights_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+        file_name=f"mia_training_insights_{get_central_time().strftime('%Y%m%d_%H%M')}.txt",
         mime="text/plain"
     )
 
@@ -1316,7 +1322,7 @@ with tab4:
     total_sessions = len(df_speed)
     if speed_time_filter == "Last 30 Days" and 'date' in df_speed.columns:
         df_speed['date'] = pd.to_datetime(df_speed['date'], errors='coerce')
-        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        cutoff_date = get_central_time() - pd.Timedelta(days=30)
         df_speed = df_speed[df_speed['date'] >= cutoff_date]
 
         if len(df_speed) > 0 and df_speed['date'].notna().any():
@@ -1401,7 +1407,7 @@ with tab5:
     total_sessions = len(df_agility)
     if agility_time_filter == "Last 30 Days" and 'date' in df_agility.columns:
         df_agility['date'] = pd.to_datetime(df_agility['date'], errors='coerce')
-        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        cutoff_date = get_central_time() - pd.Timedelta(days=30)
         df_agility = df_agility[df_agility['date'] >= cutoff_date]
 
         if len(df_agility) > 0 and df_agility['date'].notna().any():
@@ -1487,7 +1493,7 @@ with tab6:
     total_sessions = len(df_ball)
     if ball_time_filter == "Last 30 Days" and 'date' in df_ball.columns:
         df_ball['date'] = pd.to_datetime(df_ball['date'], errors='coerce')
-        cutoff_date = datetime.now() - pd.Timedelta(days=30)
+        cutoff_date = get_central_time() - pd.Timedelta(days=30)
         df_ball = df_ball[df_ball['date'] >= cutoff_date]
 
         if len(df_ball) > 0 and df_ball['date'].notna().any():
@@ -1595,7 +1601,7 @@ with tab7:
             total_sessions = len(df_match)
             if match_time_filter == "Last 30 Days" and 'date' in df_match.columns:
                 df_match['date'] = pd.to_datetime(df_match['date'], errors='coerce')
-                cutoff_date = datetime.now() - pd.Timedelta(days=30)
+                cutoff_date = get_central_time() - pd.Timedelta(days=30)
                 df_match = df_match[df_match['date'] >= cutoff_date]
 
                 if len(df_match) > 0 and df_match['date'].notna().any():
