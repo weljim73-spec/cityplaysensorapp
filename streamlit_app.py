@@ -132,7 +132,7 @@ def load_data_from_google_sheets():
             'sprint_distance_yd': 'sprint_distance',
             'total_distance_mi': 'total_distance',
             'duration_min': 'duration',
-            'kicking_power_mph': 'kicking_power_mph',
+            'kicking_power_mph': 'kicking_power',
             'avg_turn_entry_speed_mph': 'avg_turn_entry',
             'avg_turn_exit_speed_mph': 'avg_turn_exit',
             'sprints': 'num_sprints',
@@ -147,7 +147,7 @@ def load_data_from_google_sheets():
         # Convert numeric columns (using internal mapped names)
         numeric_columns = [
             'duration', 'ball_touches', 'total_distance', 'sprint_distance',
-            'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
+            'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
             'left_touches', 'right_touches', 'left_foot_pct',
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
@@ -295,7 +295,7 @@ COLUMN_MAPPING = {
     'left_foot_pct': 'left_foot_pct',
     'left_releases': 'left_releases',
     'right_releases': 'right_releases',
-    'kicking_power_mph': 'kicking_power_mph',
+    'kicking_power': 'kicking_power',
     'left_kicking_power_mph': 'left_kicking_power_mph',
     'right_kicking_power_mph': 'right_kicking_power_mph',
     # Match Stats
@@ -1711,7 +1711,7 @@ with tab2:
                 'left_foot_pct': left_foot_pct,
                 'left_releases': left_releases,
                 'right_releases': right_releases,
-                'kicking_power_mph': kicking_power,
+                'kicking_power': kicking_power,
                 'left_kicking_power_mph': left_kicking_power,
                 'right_kicking_power_mph': right_kicking_power,
                 'position': position,
@@ -1743,7 +1743,7 @@ with tab2:
                 # Ensure data types are preserved after concat
                 numeric_columns = [
                     'duration', 'ball_touches', 'total_distance', 'sprint_distance',
-                    'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
+                    'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
                     'left_touches', 'right_touches', 'left_foot_pct',
                     'left_releases', 'right_releases',
                     'left_kicking_power_mph', 'right_kicking_power_mph',
