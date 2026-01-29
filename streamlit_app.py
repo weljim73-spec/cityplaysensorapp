@@ -257,20 +257,43 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background-color: #f8f9fa;
     }
-    /* Make sidebar collapse button more visible */
+    /* Make sidebar collapse button HIGHLY visible with strong contrast */
     [data-testid="collapsedControl"] {
-        background-color: #1f77b4 !important;
+        background-color: #ff4444 !important;
         color: white !important;
-        border-radius: 4px;
+        border: 2px solid #cc0000 !important;
+        border-radius: 6px !important;
+        padding: 8px !important;
     }
     [data-testid="collapsedControl"]:hover {
-        background-color: #1565c0 !important;
+        background-color: #cc0000 !important;
+        border-color: #990000 !important;
     }
-    button[kind="header"] {
-        background-color: rgba(31, 119, 180, 0.1) !important;
+    [data-testid="collapsedControl"] svg {
+        color: white !important;
+        fill: white !important;
     }
-    button[kind="header"]:hover {
-        background-color: rgba(31, 119, 180, 0.2) !important;
+    /* Style the sidebar collapse button when sidebar is open */
+    [data-testid="stSidebar"] button[kind="header"] {
+        background-color: #ff4444 !important;
+        color: white !important;
+        border: 2px solid #cc0000 !important;
+        border-radius: 6px !important;
+        padding: 8px !important;
+        opacity: 1 !important;
+    }
+    [data-testid="stSidebar"] button[kind="header"]:hover {
+        background-color: #cc0000 !important;
+        border-color: #990000 !important;
+    }
+    [data-testid="stSidebar"] button[kind="header"] svg {
+        color: white !important;
+        fill: white !important;
+        stroke: white !important;
+    }
+    /* Target the chevron icon specifically */
+    section[data-testid="stSidebar"] svg {
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
