@@ -1329,12 +1329,14 @@ if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
         st.session_state.auto_loaded = False
 
     if not st.session_state.auto_loaded:
-        with st.spinner("Loading data from Google Sheets..."):
+        with st.spinner("🔄 Auto-loading data from Google Sheets..."):
             df, error = load_data_from_google_sheets()
             if not error and df is not None:
                 st.session_state.df = df
                 st.session_state.auto_loaded = True
                 calculate_personal_records()
+                # Force a rerun to display the loaded data
+                st.rerun()
 
 # Refresh Data button (visible in main area)
 if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
