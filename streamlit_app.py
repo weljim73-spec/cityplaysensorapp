@@ -1177,107 +1177,71 @@ if not OCR_AVAILABLE:
     st.warning(f"⚠️ OCR not available: {OCR_ERROR}. Manual data entry only.")
 
 # ============================================================================
-# SIDEBAR - Data Management
+# SIDEBAR - Data Management (Google Sheets Only)
 # ============================================================================
 with st.sidebar:
-    st.header("📂 Data Management")
+    st.header("☁️ Google Sheets")
 
-    # Google Sheets Integration
+    # Check if Google Sheets is configured
     if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
-        st.subheader("☁️ Cloud Storage")
 
-        # Sync from Google Sheets
-        if st.button("🔄 Load from Google Sheets", use_container_width=True):
+        # Load from Google Sheets
+        if st.button("🔄 Load Data from Google Sheets", type="primary", use_container_width=True):
             with st.spinner("Loading data from Google Sheets..."):
                 df, error = load_data_from_google_sheets()
                 if error:
-                    st.error(f"❌ Failed to load: {error}")
+                    st.error(f"❌ **Failed to load data**")
+                    st.error(f"Error: {error}")
+                    st.info("💡 **Troubleshooting:**\n"
+                           "1. Check Google Sheet URL in secrets\n"
+                           "2. Verify service account has access\n"
+                           "3. Ensure column headers match exactly")
                 else:
                     st.session_state.df = df
                     st.session_state.auto_loaded = True
                     calculate_personal_records()
-                    st.success("✅ Data loaded from Google Sheets!")
+                    st.success(f"✅ Loaded {len(df)} sessions from Google Sheets!")
                     st.rerun()
+
+        st.markdown("---")
 
         # Save to Google Sheets
         if st.session_state.df is not None and len(st.session_state.df) > 0:
-            if st.button("💾 Save to Google Sheets", use_container_width=True):
+            if st.button("💾 Save Data to Google Sheets", use_container_width=True):
                 with st.spinner("Saving to Google Sheets..."):
                     success, error = save_data_to_google_sheets(st.session_state.df)
                     if error:
-                        st.error(f"❌ Failed to save: {error}")
+                        st.error(f"❌ **Failed to save**")
+                        st.error(f"Error: {error}")
                     else:
-                        st.success("✅ Saved to Google Sheets!")
+                        st.success("✅ Data saved to Google Sheets!")
 
         st.markdown("---")
 
-    # File Upload
-    st.subheader("📁 File Upload")
-    uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
+        # Data Status
+        st.subheader("📊 Current Data")
+        if st.session_state.df is not None and len(st.session_state.df) > 0:
+            st.success(f"**{len(st.session_state.df)}** sessions loaded")
+            if 'date' in st.session_state.df.columns:
+                latest = st.session_state.df['date'].max()
+                if pd.notna(latest):
+                    st.caption(f"Latest: {latest.strftime('%b %d, %Y')}")
+        else:
+            st.warning("⚠️ No data loaded")
+            st.info("Click '🔄 Load Data from Google Sheets' above to get started")
 
-    if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file)
-
-            # Normalize column names
-            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-
-            # Apply column mapping
-            df.rename(columns=COLUMN_MAPPING, inplace=True)
-
-            # Convert date column
-            if 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'], errors='coerce')
-
-            # Convert numeric columns
-            numeric_columns = [
-                'duration', 'ball_touches', 'total_distance', 'sprint_distance',
-                'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
-                'left_touches', 'right_touches', 'left_foot_pct',
-                'left_releases', 'right_releases',
-                'left_kicking_power_mph', 'right_kicking_power_mph',
-                'left_turns', 'back_turns', 'right_turns', 'intense_turns',
-                'avg_turn_entry', 'avg_turn_exit', 'total_turns', 'work_rate',
-                'goals', 'assists', 'ball_possessions'
-            ]
-
-            for col in numeric_columns:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-
-            st.session_state.df = df
-            calculate_personal_records()
-            st.success(f"✅ Loaded {len(df)} sessions from file!")
-            st.rerun()
-
-        except Exception as e:
-            st.error(f"❌ Error reading file: {str(e)}")
-
-    # Download Data
-    if st.session_state.df is not None and len(st.session_state.df) > 0:
-        st.markdown("---")
-        st.subheader("📥 Download Data")
-
-        # Prepare download
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            st.session_state.df.to_excel(writer, index=False, sheet_name='Training Data')
-
-        st.download_button(
-            label="📥 Download Excel",
-            data=output.getvalue(),
-            file_name=f"mia_training_data_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-
-    # Data Status
-    st.markdown("---")
-    st.subheader("📊 Data Status")
-    if st.session_state.df is not None:
-        st.info(f"**{len(st.session_state.df)}** sessions loaded")
     else:
-        st.warning("No data loaded")
+        # Google Sheets not configured
+        st.error("❌ **Google Sheets Not Configured**")
+        st.info("**To configure Google Sheets:**\n\n"
+               "1. Go to Streamlit Cloud app settings\n"
+               "2. Click 'Secrets' in sidebar\n"
+               "3. Add your Google Sheets URL and service account credentials\n\n"
+               "See GOOGLE_SHEETS_SETUP_GUIDE.md for detailed instructions.")
+
+        if st.button("📖 View Setup Guide", use_container_width=True):
+            st.info("Setup guide is in your repository:\n"
+                   "`GOOGLE_SHEETS_SETUP_GUIDE.md`")
 
 # Auto-load data from Google Sheets on app start
 if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
