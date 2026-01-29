@@ -1314,7 +1314,7 @@ with tab1:
 
         # Key Metrics Row 1
         st.subheader("🎯 Key Performance Indicators")
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             if 'top_speed' in df.columns:
@@ -1335,29 +1335,30 @@ with tab1:
                              delta=f"Best: {best_turns:.1f}", delta_color="normal")
 
         with col3:
-            if 'left_kicking_power_mph' in df.columns and 'right_kicking_power_mph' in df.columns:
+            if 'left_kicking_power_mph' in df.columns:
                 left_power = pd.to_numeric(df['left_kicking_power_mph'], errors='coerce').dropna()
-                right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').dropna()
-
-                if len(left_power) > 0 or len(right_power) > 0:
-                    avg_left = left_power.mean() if len(left_power) > 0 else 0
-                    avg_right = right_power.mean() if len(right_power) > 0 else 0
-                    best_left = left_power.max() if len(left_power) > 0 else 0
-                    best_right = right_power.max() if len(right_power) > 0 else 0
-
-                    if avg_left >= avg_right:
-                        top_power_avg = avg_left
-                        top_power_best = best_left
-                        foot = "L"
-                    else:
-                        top_power_avg = avg_right
-                        top_power_best = best_right
-                        foot = "R"
-
-                    st.metric("Top Foot Power (mph) (avg)", f"{top_power_avg:.1f} {foot}",
-                             delta=f"Best: {top_power_best:.1f} {foot}", delta_color="normal")
+                if len(left_power) > 0:
+                    avg_left = left_power.mean()
+                    best_left = left_power.max()
+                    st.metric("Left Foot Power (mph)", f"{avg_left:.1f}",
+                             delta=f"Best: {best_left:.1f}", delta_color="normal")
+                else:
+                    st.metric("Left Foot Power (mph)", "N/A",
+                             delta="No data", delta_color="off")
 
         with col4:
+            if 'right_kicking_power_mph' in df.columns:
+                right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').dropna()
+                if len(right_power) > 0:
+                    avg_right = right_power.mean()
+                    best_right = right_power.max()
+                    st.metric("Right Foot Power (mph)", f"{avg_right:.1f}",
+                             delta=f"Best: {best_right:.1f}", delta_color="normal")
+                else:
+                    st.metric("Right Foot Power (mph)", "N/A",
+                             delta="No data", delta_color="off")
+
+        with col5:
             if 'left_touches' in df.columns and 'right_touches' in df.columns:
                 left = pd.to_numeric(df['left_touches'], errors='coerce')
                 right = pd.to_numeric(df['right_touches'], errors='coerce')
@@ -2407,6 +2408,7 @@ with tab8:
             ("Top Speed", 'top_speed', "mph", "🚀"),
             ("Sprint Distance", 'sprint_distance', "yards", "🏃"),
             ("Ball Touches", 'ball_touches', "touches", "⚽"),
+            ("Kicking Power", 'kicking_power', "mph", "💪"),
             ("Total Distance", 'total_distance', "miles", "📏"),
             ("Intense Turns", 'intense_turns', "turns", "🔄"),
             ("L/R Touch Ratio", 'left_right_ratio', "(best, goal: ≥0.5)", "🎯"),
