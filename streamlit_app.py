@@ -151,7 +151,7 @@ def load_data_from_google_sheets():
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
-            'avg_turn_entry', 'avg_turn_exit', 'total_turns',
+            'avg_turn_entry', 'avg_turn_exit', 'total_turns', 'work_rate',
             'goals', 'assists', 'ball_possessions'
         ]
 
@@ -1209,6 +1209,13 @@ if GSHEETS_AVAILABLE and "google_sheets_url" in st.secrets:
                 else:
                     st.session_state.df = df
                     calculate_personal_records()
+
+                    # Clear cached AI insights so user regenerates with refreshed data
+                    if 'ai_insights_generated' in st.session_state:
+                        st.session_state.ai_insights_generated = False
+                    if 'ai_insights_report' in st.session_state:
+                        st.session_state.ai_insights_report = ""
+
                     st.success("✅ Data refreshed!")
                     st.rerun()
 
@@ -1264,20 +1271,22 @@ with tab1:
                 right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').dropna()
 
                 if len(left_power) > 0 or len(right_power) > 0:
+                    avg_left = left_power.mean() if len(left_power) > 0 else 0
+                    avg_right = right_power.mean() if len(right_power) > 0 else 0
                     best_left = left_power.max() if len(left_power) > 0 else 0
                     best_right = right_power.max() if len(right_power) > 0 else 0
 
-                    if best_left >= best_right:
-                        top_power = best_left
+                    if avg_left >= avg_right:
+                        top_power_avg = avg_left
+                        top_power_best = best_left
                         foot = "L"
-                        best_foot = "L"
                     else:
-                        top_power = best_right
+                        top_power_avg = avg_right
+                        top_power_best = best_right
                         foot = "R"
-                        best_foot = "R"
 
-                    st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
-                             delta=f"Best: {top_power:.1f} {best_foot}", delta_color="normal")
+                    st.metric("Top Foot Power (mph) (avg)", f"{top_power_avg:.1f} {foot}",
+                             delta=f"Best: {top_power_best:.1f} {foot}", delta_color="normal")
 
         with col4:
             if 'left_touches' in df.columns and 'right_touches' in df.columns:
@@ -1662,6 +1671,26 @@ with tab2:
                 else:
                     st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_row])], ignore_index=True)
 
+                # Ensure data types are preserved after concat
+                numeric_columns = [
+                    'duration', 'ball_touches', 'total_distance', 'sprint_distance',
+                    'accelerations', 'kicking_power_mph', 'top_speed', 'num_sprints',
+                    'left_touches', 'right_touches', 'left_foot_pct',
+                    'left_releases', 'right_releases',
+                    'left_kicking_power_mph', 'right_kicking_power_mph',
+                    'left_turns', 'back_turns', 'right_turns', 'intense_turns',
+                    'avg_turn_entry', 'avg_turn_exit', 'total_turns', 'work_rate',
+                    'goals', 'assists', 'ball_possessions'
+                ]
+
+                for col in numeric_columns:
+                    if col in st.session_state.df.columns:
+                        st.session_state.df[col] = pd.to_numeric(st.session_state.df[col], errors='coerce')
+
+                # Ensure date column is datetime
+                if 'date' in st.session_state.df.columns:
+                    st.session_state.df['date'] = pd.to_datetime(st.session_state.df['date'], errors='coerce')
+
                 calculate_personal_records()
 
                 # Auto-save to Google Sheets if configured
@@ -1679,6 +1708,13 @@ with tab2:
                 st.session_state['extracted_data'] = {}  # Clear extracted data
                 st.session_state['form_counter'] += 1  # Increment to reset form
                 st.session_state['pending_submission'] = None  # Clear pending submission
+
+                # Clear cached AI insights so user regenerates with new data
+                if 'ai_insights_generated' in st.session_state:
+                    st.session_state.ai_insights_generated = False
+                if 'ai_insights_report' in st.session_state:
+                    st.session_state.ai_insights_report = ""
+
                 st.rerun()
 
         with col_confirm2:

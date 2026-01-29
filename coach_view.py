@@ -151,7 +151,7 @@ def load_data_from_google_sheets():
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
-            'avg_turn_entry', 'avg_turn_exit', 'total_turns',
+            'avg_turn_entry', 'avg_turn_exit', 'total_turns', 'work_rate',
             'goals', 'assists', 'ball_possessions'
         ]
 
@@ -954,20 +954,22 @@ with tab1:
             right_power = pd.to_numeric(df['right_kicking_power_mph'], errors='coerce').dropna()
 
             if len(left_power) > 0 or len(right_power) > 0:
+                avg_left = left_power.mean() if len(left_power) > 0 else 0
+                avg_right = right_power.mean() if len(right_power) > 0 else 0
                 best_left = left_power.max() if len(left_power) > 0 else 0
                 best_right = right_power.max() if len(right_power) > 0 else 0
 
-                if best_left >= best_right:
-                    top_power = best_left
+                if avg_left >= avg_right:
+                    top_power_avg = avg_left
+                    top_power_best = best_left
                     foot = "L"
-                    best_foot = "L"
                 else:
-                    top_power = best_right
+                    top_power_avg = avg_right
+                    top_power_best = best_right
                     foot = "R"
-                    best_foot = "R"
 
-                st.metric("Top Foot Power (mph)", f"{top_power:.1f} {foot}",
-                         delta=f"Best: {top_power:.1f} {best_foot}", delta_color="normal")
+                st.metric("Top Foot Power (mph) (avg)", f"{top_power_avg:.1f} {foot}",
+                         delta=f"Best: {top_power_best:.1f} {foot}", delta_color="normal")
                 st.caption("⚽ Strongest kick recorded")
 
     with col4:
