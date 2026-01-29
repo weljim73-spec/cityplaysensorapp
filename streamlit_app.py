@@ -257,6 +257,21 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background-color: #f8f9fa;
     }
+    /* Make sidebar collapse button more visible */
+    [data-testid="collapsedControl"] {
+        background-color: #1f77b4 !important;
+        color: white !important;
+        border-radius: 4px;
+    }
+    [data-testid="collapsedControl"]:hover {
+        background-color: #1565c0 !important;
+    }
+    button[kind="header"] {
+        background-color: rgba(31, 119, 180, 0.1) !important;
+    }
+    button[kind="header"]:hover {
+        background-color: rgba(31, 119, 180, 0.2) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
