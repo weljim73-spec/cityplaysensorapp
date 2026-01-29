@@ -1760,6 +1760,11 @@ with tab2:
                             st.warning(f"⚠️ Session added locally but cloud save failed: {error}")
                             st.info("💡 Use 'Save to Cloud' button in sidebar to sync manually")
                         else:
+                            # Reload from Google Sheets to ensure data types are correct
+                            df_reloaded, reload_error = load_data_from_google_sheets()
+                            if not reload_error and df_reloaded is not None:
+                                st.session_state.df = df_reloaded
+                                calculate_personal_records()
                             st.success("✅ Session added and saved to cloud!")
                 else:
                     st.success("✅ Session added successfully!")
