@@ -182,8 +182,18 @@ def save_data_to_google_sheets(df):
         worksheet.clear()
 
         # Prepare data for upload
+        # Create a copy to avoid modifying original
+        df_save = df.copy()
+
+        # Format date column to match existing format (YYYY-MM-DD HH:MM:SS)
+        if 'date' in df_save.columns:
+            df_save['date'] = pd.to_datetime(df_save['date'], errors='coerce')
+            df_save['date'] = df_save['date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            # Replace 'NaT' with empty string
+            df_save['date'] = df_save['date'].fillna('')
+
         # Convert DataFrame to list of lists
-        data = [df.columns.tolist()] + df.astype(str).values.tolist()
+        data = [df_save.columns.tolist()] + df_save.astype(str).values.tolist()
 
         # Update the sheet
         worksheet.update('A1', data)
