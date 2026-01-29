@@ -257,43 +257,50 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background-color: #f8f9fa;
     }
-    /* Make sidebar collapse button HIGHLY visible with strong contrast */
+    /* AGGRESSIVE styling for sidebar collapse button - all possible selectors */
+    /* When collapsed */
     [data-testid="collapsedControl"] {
         background-color: #ff4444 !important;
-        color: white !important;
-        border: 2px solid #cc0000 !important;
-        border-radius: 6px !important;
-        padding: 8px !important;
+        border: 3px solid #cc0000 !important;
+        box-shadow: 0 0 10px rgba(255, 68, 68, 0.8) !important;
     }
     [data-testid="collapsedControl"]:hover {
         background-color: #cc0000 !important;
-        border-color: #990000 !important;
     }
     [data-testid="collapsedControl"] svg {
         color: white !important;
         fill: white !important;
     }
-    /* Style the sidebar collapse button when sidebar is open */
-    [data-testid="stSidebar"] button[kind="header"] {
+    /* Target sidebar header with multiple selectors */
+    section[data-testid="stSidebar"] > div:first-child button,
+    [data-testid="stSidebar"] button[kind="header"],
+    [data-testid="stSidebar"] button[data-testid="baseButton-header"],
+    [data-testid="stSidebar"] [class*="viewerBadge"] button {
+        background: #ff4444 !important;
         background-color: #ff4444 !important;
-        color: white !important;
-        border: 2px solid #cc0000 !important;
-        border-radius: 6px !important;
-        padding: 8px !important;
-        opacity: 1 !important;
+        border: 3px solid #cc0000 !important;
+        box-shadow: 0 0 10px rgba(255, 68, 68, 0.8) !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
     }
+    section[data-testid="stSidebar"] > div:first-child button:hover,
     [data-testid="stSidebar"] button[kind="header"]:hover {
+        background: #cc0000 !important;
         background-color: #cc0000 !important;
-        border-color: #990000 !important;
     }
-    [data-testid="stSidebar"] button[kind="header"] svg {
+    /* Force white icons everywhere in sidebar header */
+    section[data-testid="stSidebar"] > div:first-child svg,
+    section[data-testid="stSidebar"] > div:first-child svg path,
+    [data-testid="stSidebar"] button svg,
+    [data-testid="stSidebar"] button svg path {
         color: white !important;
         fill: white !important;
         stroke: white !important;
     }
-    /* Target the chevron icon specifically */
-    section[data-testid="stSidebar"] svg {
-        color: white !important;
+    /* Nuclear option - style ALL buttons at top of sidebar */
+    [data-testid="stSidebar"] div[data-testid="stToolbar"] button {
+        background-color: #ff4444 !important;
+        border: 3px solid #cc0000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
