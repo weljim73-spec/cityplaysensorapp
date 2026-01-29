@@ -17,6 +17,7 @@ st.set_page_config(
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import pytz
 from PIL import Image
 import io
 from io import BytesIO
@@ -346,6 +347,7 @@ def calculate_personal_records():
 
     personal_records = {}
     pr_dates = {}
+    pr_foot = {}  # Track which foot for kicking power
 
     for col, name in pr_columns.items():
         if col in df.columns:
@@ -358,6 +360,19 @@ def calculate_personal_records():
                     pr_dates[col] = pd.to_datetime(df.loc[max_idx, 'date'])
                 else:
                     pr_dates[col] = None
+
+                # For kicking_power, determine which foot
+                if col == 'kicking_power':
+                    left_power = pd.to_numeric(df.loc[max_idx, 'left_kicking_power_mph'], errors='coerce') if 'left_kicking_power_mph' in df.columns else 0
+                    right_power = pd.to_numeric(df.loc[max_idx, 'right_kicking_power_mph'], errors='coerce') if 'right_kicking_power_mph' in df.columns else 0
+                    if pd.notna(left_power) and pd.notna(right_power):
+                        pr_foot['kicking_power'] = 'L' if left_power >= right_power else 'R'
+                    elif pd.notna(left_power):
+                        pr_foot['kicking_power'] = 'L'
+                    elif pd.notna(right_power):
+                        pr_foot['kicking_power'] = 'R'
+                    else:
+                        pr_foot['kicking_power'] = ''
 
     # L/R Touch Ratio
     if 'left_touches' in df.columns and 'right_touches' in df.columns:
@@ -402,6 +417,7 @@ def calculate_personal_records():
 
     st.session_state.personal_records = personal_records
     st.session_state.pr_dates = pr_dates
+    st.session_state.pr_foot = pr_foot
 
 def parse_ocr_text(text):
     """Parse OCR text to extract metrics - enhanced version from v4.2"""
@@ -1550,7 +1566,10 @@ with tab2:
 
         with col1:
             st.write("**Session Info**")
-            date = st.date_input("Date", value=datetime.now())
+            # Use U.S. Central Time for date
+            central_tz = pytz.timezone('America/Chicago')
+            central_now = datetime.now(central_tz)
+            date = st.date_input("Date", value=central_now)
 
             # Session Name - dropdown with existing values + custom entry
             existing_sessions = []
@@ -2425,6 +2444,12 @@ with tab8:
                     display_value = f"{value:.2f}" if value > 0 else "N/A"
                 else:
                     display_value = f"{value:.1f}" if value > 0 else "N/A"
+
+                # Add foot indicator for kicking power
+                if key == 'kicking_power' and hasattr(st.session_state, 'pr_foot'):
+                    foot_indicator = st.session_state.pr_foot.get('kicking_power', '')
+                    if foot_indicator:
+                        display_value = f"{display_value} ({foot_indicator})"
 
                 st.metric(f"{emoji} {name}", f"{display_value} {unit}")
 
