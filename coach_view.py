@@ -147,9 +147,12 @@ def load_data_from_google_sheets():
         }
         df.rename(columns=column_mapping, inplace=True)
 
-        # Convert date column to datetime
+        # Convert date column to datetime and localize to Central Time
         if 'date' in df.columns:
             df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            # Localize timezone-naive datetimes to Central Time
+            central_tz = pytz.timezone('America/Chicago')
+            df['date'] = df['date'].apply(lambda x: central_tz.localize(x) if pd.notna(x) and x.tzinfo is None else x)
 
         # Convert numeric columns (using internal mapped names)
         numeric_columns = [
