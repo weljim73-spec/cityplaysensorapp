@@ -145,6 +145,7 @@ def load_data_from_google_sheets():
             'sprints': 'num_sprints',
             'accl_decl': 'accelerations',
             'left_pct': 'left_foot_pct',  # Map Google Sheets left_pct to internal left_foot_pct
+            'right_pct': 'right_foot_pct',  # Map Google Sheets right_pct to internal right_foot_pct
         }
         df.rename(columns=column_mapping, inplace=True)
 
@@ -159,7 +160,7 @@ def load_data_from_google_sheets():
         numeric_columns = [
             'duration', 'ball_touches', 'total_distance', 'sprint_distance',
             'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
-            'left_touches', 'right_touches', 'left_foot_pct',
+            'left_touches', 'right_touches', 'left_foot_pct', 'right_foot_pct',
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
@@ -196,9 +197,11 @@ def save_data_to_google_sheets(df):
         # Create a copy to avoid modifying original
         df_save = df.copy()
 
-        # Rename left_foot_pct back to left_pct for Google Sheets
+        # Rename left_foot_pct back to left_pct and right_foot_pct back to right_pct for Google Sheets
         if 'left_foot_pct' in df_save.columns:
             df_save.rename(columns={'left_foot_pct': 'left_pct'}, inplace=True)
+        if 'right_foot_pct' in df_save.columns:
+            df_save.rename(columns={'right_foot_pct': 'right_pct'}, inplace=True)
 
         # Format date column to match existing format (YYYY-MM-DD HH:MM:SS)
         if 'date' in df_save.columns:
@@ -354,6 +357,8 @@ COLUMN_MAPPING = {
     'right_touches': 'right_touches',
     'left_foot_pct': 'left_foot_pct',
     'left_pct': 'left_foot_pct',  # Map Google Sheets left_pct to internal left_foot_pct
+    'right_foot_pct': 'right_foot_pct',
+    'right_pct': 'right_foot_pct',  # Map Google Sheets right_pct to internal right_foot_pct
     'left_releases': 'left_releases',
     'right_releases': 'right_releases',
     'kicking_power': 'kicking_power',
@@ -1758,6 +1763,9 @@ with tab2:
             # Left Foot % = Left Foot Touches / Ball Touches (if Ball Touches > 0)
             left_foot_pct = (left_touches / ball_touches * 100) if ball_touches > 0 else 0
 
+            # Right Foot % = 100 - Left Foot %
+            right_foot_pct = 100 - left_foot_pct if ball_touches > 0 else 0
+
             # Kicking Power = Max of Left Kicking Power or Right Kicking Power
             kicking_power = max(left_kicking_power, right_kicking_power)
 
@@ -1796,6 +1804,7 @@ with tab2:
                 'left_touches': left_touches,
                 'right_touches': right_touches,
                 'left_foot_pct': left_foot_pct,
+                'right_foot_pct': right_foot_pct,
                 'left_releases': left_releases,
                 'right_releases': right_releases,
                 'kicking_power': kicking_power,
@@ -1831,7 +1840,7 @@ with tab2:
                 numeric_columns = [
                     'duration', 'ball_touches', 'total_distance', 'sprint_distance',
                     'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
-                    'left_touches', 'right_touches', 'left_foot_pct',
+                    'left_touches', 'right_touches', 'left_foot_pct', 'right_foot_pct',
                     'left_releases', 'right_releases',
                     'left_kicking_power_mph', 'right_kicking_power_mph',
                     'left_turns', 'back_turns', 'right_turns', 'intense_turns',

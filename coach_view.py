@@ -145,6 +145,7 @@ def load_data_from_google_sheets():
             'sprints': 'num_sprints',
             'accl_decl': 'accelerations',
             'left_pct': 'left_foot_pct',  # Map Google Sheets left_pct to internal left_foot_pct
+            'right_pct': 'right_foot_pct',  # Map Google Sheets right_pct to internal right_foot_pct
         }
         df.rename(columns=column_mapping, inplace=True)
 
@@ -159,7 +160,7 @@ def load_data_from_google_sheets():
         numeric_columns = [
             'duration', 'ball_touches', 'total_distance', 'sprint_distance',
             'accelerations', 'kicking_power', 'top_speed', 'num_sprints',
-            'left_touches', 'right_touches', 'left_foot_pct',
+            'left_touches', 'right_touches', 'left_foot_pct', 'right_foot_pct',
             'left_releases', 'right_releases',
             'left_kicking_power_mph', 'right_kicking_power_mph',
             'left_turns', 'back_turns', 'right_turns', 'intense_turns',
