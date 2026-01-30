@@ -144,6 +144,7 @@ def load_data_from_google_sheets():
             'avg_turn_exit_speed_mph': 'avg_turn_exit',
             'sprints': 'num_sprints',
             'accl_decl': 'accelerations',
+            'left_pct': 'left_foot_pct',  # Map left_pct to left_foot_pct
         }
         df.rename(columns=column_mapping, inplace=True)
 
@@ -170,12 +171,40 @@ def load_data_from_google_sheets():
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
+        # Auto-calculate left_foot_pct for Ball Work sessions
+        df = auto_calculate_left_pct(df)
+
         return df, None
 
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
         return None, f"Error loading from Google Sheets: {str(e)}\n\nDetails: {error_details}"
+
+def auto_calculate_left_pct(df):
+    """Automatically calculate left_foot_pct for Ball Work training sessions"""
+    if df is None or len(df) == 0:
+        return df
+
+    # Only calculate for Ball Work sessions
+    if 'training_type' in df.columns and 'left_touches' in df.columns and 'right_touches' in df.columns:
+        # Create left_foot_pct column if it doesn't exist
+        if 'left_foot_pct' not in df.columns:
+            df['left_foot_pct'] = None
+
+        # Calculate for Ball Work sessions
+        ball_work_mask = df['training_type'] == 'Ball Work'
+
+        for idx in df[ball_work_mask].index:
+            left_touches = pd.to_numeric(df.loc[idx, 'left_touches'], errors='coerce')
+            right_touches = pd.to_numeric(df.loc[idx, 'right_touches'], errors='coerce')
+
+            if pd.notna(left_touches) and pd.notna(right_touches):
+                total_touches = left_touches + right_touches
+                if total_touches > 0:
+                    df.loc[idx, 'left_foot_pct'] = (left_touches / total_touches) * 100
+
+    return df
 
 def calculate_personal_records(df):
     """Calculate all personal records from loaded data"""
