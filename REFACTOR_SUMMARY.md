@@ -128,7 +128,57 @@ Created `tabs/components.py` with reusable patterns:
 | `display_metric_with_best()` | Metric with average and best |
 | `display_time_range_info()` | Date range caption |
 
-**Note:** These components are ready to use but not yet integrated into the main app to minimize risk.
+---
+
+### 7. Split Tabs into Individual Modules
+
+Extracted each tab's code into its own module in `tabs/`:
+
+| Module | Description |
+|--------|-------------|
+| `tabs/dashboard.py` | Training Dashboard with KPIs and trends |
+| `tabs/upload.py` | Upload & Extract with OCR and data entry |
+| `tabs/ai_insights.py` | AI-powered analysis reports |
+| `tabs/analytics.py` | Charts and analytics |
+| `tabs/speed.py` | Speed metrics analysis |
+| `tabs/agility.py` | Agility metrics analysis |
+| `tabs/ball_work.py` | Ball work and foot balance |
+| `tabs/match_play.py` | Match performance tracking |
+| `tabs/personal_records.py` | Personal records display |
+
+**Line count reductions:**
+- `streamlit_app.py`: 1,713 → 557 lines (67% reduction)
+- `coach_view.py`: 963 → 161 lines (83% reduction)
+
+Both apps now share the same tab modules, eliminating code duplication.
+
+---
+
+### 8. Fixed df.iterrows() Performance
+
+Replaced two slow `df.iterrows()` loops in `shared.py` with vectorized pandas operations:
+
+**Before (lines 327, 770):**
+```python
+for idx, row in df.iterrows():
+    left = pd.to_numeric(row.get('left_touches'), errors='coerce')
+    right = pd.to_numeric(row.get('right_touches'), errors='coerce')
+    if pd.notna(left) and pd.notna(right) and left > 0 and right > 0:
+        ratio = left / right
+        ...
+```
+
+**After:**
+```python
+left = pd.to_numeric(df['left_touches'], errors='coerce')
+right = pd.to_numeric(df['right_touches'], errors='coerce')
+valid_mask = (left > 0) & (right > 0) & pd.notna(left) & pd.notna(right)
+if valid_mask.any():
+    ratios = left[valid_mask] / right[valid_mask]
+    distances = (ratios - 0.5).abs()
+    best_idx = distances.idxmin()
+    ...
+```
 
 ---
 
@@ -136,18 +186,30 @@ Created `tabs/components.py` with reusable patterns:
 
 ```
 cityplaysensorapp/
-├── streamlit_app.py      # Main app (1,712 lines, was 2,614)
-├── coach_view.py         # Coach view (~114 lines, was 963)
-├── shared.py             # NEW: Shared utilities
+├── streamlit_app.py      # Main app (557 lines, was 2,614)
+├── coach_view.py         # Coach view (161 lines, was 963)
+├── shared.py             # Shared utilities (984 lines)
 ├── tabs/
-│   ├── __init__.py       # NEW: Package init
-│   └── components.py     # NEW: Reusable UI components
+│   ├── __init__.py       # Package init with exports
+│   ├── components.py     # Reusable UI components
+│   ├── dashboard.py      # Dashboard tab
+│   ├── upload.py         # Upload & Extract tab
+│   ├── ai_insights.py    # AI Insights tab
+│   ├── analytics.py      # Analytics tab
+│   ├── speed.py          # Speed tab
+│   ├── agility.py        # Agility tab
+│   ├── ball_work.py      # Ball Work tab
+│   ├── match_play.py     # Match Play tab
+│   └── personal_records.py # Personal Records tab
 ├── tests/
-│   ├── __init__.py       # NEW: Package init
-│   ├── conftest.py       # NEW: Test fixtures
-│   ├── test_ocr_parsing.py    # NEW: OCR tests
-│   ├── test_calculations.py   # NEW: Calculation tests
-│   └── requirements-test.txt  # NEW: Test dependencies
+│   ├── __init__.py       # Package init
+│   ├── conftest.py       # Test fixtures
+│   ├── test_ocr_parsing.py    # OCR tests (51 total tests)
+│   ├── test_calculations.py   # Calculation tests
+│   └── requirements-test.txt  # Test dependencies
+├── .github/
+│   └── workflows/
+│       └── test.yml      # GitHub Actions CI
 ├── requirements.txt      # Unchanged
 ├── packages.txt          # Unchanged
 └── README.md             # Unchanged
