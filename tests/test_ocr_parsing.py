@@ -162,7 +162,7 @@ class TestParseOcrTextBasic:
 
     def test_parse_accelerations(self):
         """Test parsing accelerations."""
-        text = "Accl/Decl: 45"
+        text = "Accl/Decl 45"  # Note: no colon after Decl
         result = parse_ocr_text(text)
         assert result.get('accelerations') == '45'
 

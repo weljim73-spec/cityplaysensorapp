@@ -60,7 +60,7 @@ def sample_ocr_text_basic():
 def sample_ocr_text_full():
     """Sample OCR text with all metrics."""
     return """
-    Training Session - Agility Focus
+    Training Session - Speed Focus
     Duration: 60 min
     Intensity: Intense
     Training Type: Speed
@@ -70,9 +70,9 @@ def sample_ocr_text_full():
     Sprint Distance: 200 yd
     Top Speed: 14.5 mph
     Sprints: 15
-    Accl/Decl: 45
+    Accl/Decl 45
 
-    Agility:
+    Turns:
     Left Turns: 85
     Right Turns: 90
     Back Turns: 45
