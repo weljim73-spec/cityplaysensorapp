@@ -318,32 +318,28 @@ def calculate_personal_records(df):
                     else:
                         pr_foot['kicking_power'] = ''
 
-    # L/R Touch Ratio
+    # L/R Touch Ratio - find ratio closest to 0.5 (vectorized)
     if 'left_touches' in df.columns and 'right_touches' in df.columns:
-        best_ratio = None
-        best_distance = float('inf')
-        best_date = None
+        left = pd.to_numeric(df['left_touches'], errors='coerce')
+        right = pd.to_numeric(df['right_touches'], errors='coerce')
+        valid_mask = (left > 0) & (right > 0) & pd.notna(left) & pd.notna(right)
 
-        for idx, row in df.iterrows():
-            left = pd.to_numeric(row.get('left_touches'), errors='coerce')
-            right = pd.to_numeric(row.get('right_touches'), errors='coerce')
+        if valid_mask.any():
+            ratios = left[valid_mask] / right[valid_mask]
+            # Find ratio closest to 0.5 (perfect balance)
+            distances = (ratios - 0.5).abs()
+            best_idx = distances.idxmin()
+            best_ratio = ratios.loc[best_idx]
 
-            if pd.notna(left) and pd.notna(right) and left > 0 and right > 0:
-                ratio = left / right
+            best_date = None
+            if 'date' in df.columns and pd.notna(df.loc[best_idx, 'date']):
+                best_date = pd.to_datetime(df.loc[best_idx, 'date'])
 
-                if ratio >= 0.5:
-                    distance = abs(ratio - 0.5)
-                else:
-                    distance = 0.5 - ratio
-
-                if distance < best_distance:
-                    best_distance = distance
-                    best_ratio = ratio
-                    if 'date' in row and pd.notna(row['date']):
-                        best_date = pd.to_datetime(row['date'])
-
-        personal_records['left_right_ratio'] = best_ratio if best_ratio else 0.0
-        pr_dates['left_right_ratio'] = best_date
+            personal_records['left_right_ratio'] = best_ratio
+            pr_dates['left_right_ratio'] = best_date
+        else:
+            personal_records['left_right_ratio'] = 0.0
+            pr_dates['left_right_ratio'] = None
 
     # L/R Ratio Average
     if 'left_touches' in df.columns and 'right_touches' in df.columns:
@@ -766,16 +762,18 @@ def analyze_training_data(df):
             insights += f"  Avg Touches: {touches.mean():.0f} | Max: {touches.max():.0f}\n"
 
     if 'left_touches' in df.columns and 'right_touches' in df.columns:
-        ratios = []
-        for idx, row in df.iterrows():
-            l = pd.to_numeric(row.get('left_touches'), errors='coerce')
-            r = pd.to_numeric(row.get('right_touches'), errors='coerce')
-            if pd.notna(l) and pd.notna(r) and l > 0 and r > 0:
-                ratios.append(l / r)
+        # Vectorized ratio calculation
+        left = pd.to_numeric(df['left_touches'], errors='coerce')
+        right = pd.to_numeric(df['right_touches'], errors='coerce')
+        valid_mask = (left > 0) & (right > 0) & pd.notna(left) & pd.notna(right)
 
-        if ratios:
-            avg_ratio = sum(ratios) / len(ratios)
-            best_ratio = min(ratios, key=lambda x: abs(x - 0.5))
+        if valid_mask.any():
+            ratios = left[valid_mask] / right[valid_mask]
+            avg_ratio = ratios.mean()
+            # Best ratio is closest to 0.5 (perfect balance)
+            distances = (ratios - 0.5).abs()
+            best_ratio = ratios.loc[distances.idxmin()]
+
             insights += f"\n  Left/Right Touch Ratio:\n"
             insights += f"    Average: {avg_ratio:.2f} | Best: {best_ratio:.2f} | Goal: 0.50\n"
 
